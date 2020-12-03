@@ -32,7 +32,7 @@ if (!gotTheLock) {
 	function createMainWindow() {
 		const window = new BrowserWindow({
 			width: 250,
-			height: 350,
+			height: 400,
 			resizable: false,
 			frame: false,
 			fullscreenable: false,
