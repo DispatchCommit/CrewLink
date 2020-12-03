@@ -44,6 +44,8 @@ interface OtherDead {
 	[playerId: number]: boolean; // isTalking
 }
 
+const MAX_DISTANCE: number = 1.25;
+
 // function clamp(number: number, min: number, max: number): number {
 // 	if (min > max) {
 // 		let tmp = max;
@@ -253,14 +255,15 @@ export default function Voice() {
 						(audio as any).setSinkId(settings.speaker);
 
 					const context = new AudioContext();
-					var source = context.createMediaStreamSource(stream);
+					const source = context.createMediaStreamSource(stream);
 					let gain = context.createGain();
 					let pan = context.createPanner();
 					// let compressor = context.createDynamicsCompressor();
 					pan.refDistance = 0.1;
 					pan.panningModel = 'equalpower';
 					pan.distanceModel = 'linear';
-					pan.maxDistance = 2.66 * 2;
+					// pan.maxDistance = 2.66 * 2;
+					pan.maxDistance = MAX_DISTANCE * 2;
 					pan.rolloffFactor = 1;
 
 					source.connect(pan);
