@@ -37,7 +37,9 @@ const TestMicrophoneButton: React.FC = () => {
 
     if (error) return <p style={{ fontSize: 12, color: 'red' }}>Could not connect to microphone</p>
 
-    return <div style={{ width: 200, background: 'red', height: 20 }}><div style={{ background: 'green', width: `${rms * 2 * 100}%`, height: 20 }}></div></div>
+    return <div style={{ width: 200, background: 'red', height: 20 }}>
+      <div style={{ background: 'green', width: `${rms * 2 * 100}%`, height: 20 }} />
+    </div>
 }
 
 export default TestMicrophoneButton
