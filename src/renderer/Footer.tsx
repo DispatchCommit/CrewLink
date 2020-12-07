@@ -4,7 +4,9 @@ import React from "react";
 export default function Footer() {
 	return (
 		<div className="footer">
-			Made by Ottomated
+			<div className="row">
+        <div>Maintained by DispatchPlays</div>
+      </div>
 			<div className="row">
 				<svg width={36} height={36} viewBox="0 0 24 24" onClick={() => {
 					shell.openExternal('https://github.com/dispatchcommit/crewlink');
