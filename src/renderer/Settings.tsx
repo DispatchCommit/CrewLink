@@ -271,7 +271,7 @@ export default function Settings({ open, onClose }: SettingsProps) {
 				action: ['stereoInLobby', !settings.stereoInLobby]
 			})}>
 				<input type="checkbox" checked={settings.stereoInLobby} style={{ color: '#fd79a8' }} readOnly />
-				<label>Stereo Audio in Lobbies</label>
+				<label>Use 3D Audio</label>
 			</div>
 		</div>
 	</div>

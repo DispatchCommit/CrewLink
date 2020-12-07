@@ -46,8 +46,8 @@ const TestMicrophoneButton: React.FC = () => {
 
     if (error) return <p style={{ fontSize: 12, color: 'red' }}>Could not connect to microphone</p>
 
-    return <div style={{ width: 200, background: 'red', height: 20 }}>
-      <div style={{ background: 'green', width: `${rms * 2 * 100}%`, height: 20 }} />
+    return <div style={{ width: 200, background: '#666', backgroundImage: 'linear-gradient(to right, #666 5px, transparent 1px)', height: 20 }}>
+      <div style={{ background: 'green', backgroundImage: 'linear-gradient(to right, green 0%, yellow 80%, red 100%)', backgroundSize: '100% 100%', clipPath: `inset(0 ${Math.ceil(( 1 - rms * 2 ) * 10) * 10}% 0 0)`, width: '100%', height: 20 }} />
     </div>
 }
 

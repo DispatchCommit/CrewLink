@@ -60,48 +60,78 @@ const MAX_DISTANCE: number = 1.25;
 // 	return clamp((n - oldLow) / (oldHigh - oldLow) * (newHigh - newLow) + newLow, newLow, newHigh);
 // }
 
+function calculatePlayerDistance ( me: Player, other: Player ): number {
+  return Math.sqrt( Math.pow( me.x - other.x, 2 ) + Math.pow( me.y - other.y, 2 ) );
+}
+
 function calculateVoiceAudio(state: AmongUsState, settings: ISettings, me: Player, other: Player, gain: GainNode, pan: PannerNode): void {
 	const audioContext = pan.context;
 	pan.positionZ.setValueAtTime(-0.5, audioContext.currentTime);
+
 	let panPos = [
 		(other.x - me.x),
 		(other.y - me.y)
 	];
+
 	if (state.gameState === GameState.DISCUSSION || (state.gameState === GameState.LOBBY && !settings.stereoInLobby)) {
-		panPos = [0, 0];
+		panPos = [ 0, 0 ];
 	}
+
 	if (isNaN(panPos[0])) panPos[0] = 999;
 	if (isNaN(panPos[1])) panPos[1] = 999;
+
 	panPos[0] = Math.min(999, Math.max(-999, panPos[0]));
 	panPos[1] = Math.min(999, Math.max(-999, panPos[1]));
+
 	if (other.inVent) {
 		gain.gain.value = 0;
 		return;
 	}
+
+  // Increase hearing range for ghosts
+  if ( me.isDead ) {
+    pan.maxDistance = MAX_DISTANCE * 4;
+  }
+
 	if (me.isDead && other.isDead) {
 		gain.gain.value = 1;
-		pan.positionX.setValueAtTime(panPos[0], audioContext.currentTime);
-		pan.positionY.setValueAtTime(panPos[1], audioContext.currentTime);
+		pan.positionX.setValueAtTime( panPos[0], audioContext.currentTime );
+		pan.positionY.setValueAtTime( panPos[1], audioContext.currentTime );
 		return;
 	}
+
 	if (!me.isDead && other.isDead) {
 		gain.gain.value = 0;
 		return;
 	}
+
 	if (state.gameState === GameState.LOBBY || state.gameState === GameState.DISCUSSION) {
 		gain.gain.value = 1;
-		pan.positionX.setValueAtTime(panPos[0], audioContext.currentTime);
-		pan.positionY.setValueAtTime(panPos[1], audioContext.currentTime);
-	} else if (state.gameState === GameState.TASKS) {
+		pan.positionX.setValueAtTime( panPos[0], audioContext.currentTime );
+		pan.positionY.setValueAtTime( panPos[1], audioContext.currentTime );
+	} else if ( state.gameState === GameState.TASKS ) {
 		// const distance = Math.sqrt(Math.pow(me.x - other.x, 2) + Math.pow(me.y - other.y, 2));
-		gain.gain.value = 1;
 		// gain.gain.value = mapNumber(distance, 0, 2.66, 1, 0);
-		pan.positionX.setValueAtTime(panPos[0], audioContext.currentTime);
-		pan.positionY.setValueAtTime(panPos[1], audioContext.currentTime);
+
+    if ( settings.stereoInLobby ) {
+      gain.gain.value = 1;
+      pan.positionX.setValueAtTime( panPos[0], audioContext.currentTime );
+      pan.positionY.setValueAtTime( panPos[1], audioContext.currentTime );
+      pan.positionZ.setValueAtTime( 0, audioContext.currentTime );
+
+      console.log( `Position: ${panPos[0].toFixed(2)}, ${panPos[1].toFixed(2)}` );
+    } else {
+      gain.gain.value = 1;
+      pan.positionX.setValueAtTime( 0, audioContext.currentTime );
+      pan.positionY.setValueAtTime( 0, audioContext.currentTime );
+      pan.positionZ.setValueAtTime( calculatePlayerDistance( me, other ), audioContext.currentTime );
+
+      console.log( `Distance: ${calculatePlayerDistance( me, other ).toFixed(2)}` );
+    }
 	} else {
 		gain.gain.value = 0;
 	}
-	if (gain.gain.value === 1 && Math.sqrt(Math.pow(me.x - other.x, 2) + Math.pow(me.y - other.y, 2)) > 7) {
+	if ( gain.gain.value === 1 && calculatePlayerDistance( me, other ) > 7 ) {
 		gain.gain.value = 0;
 	}
 }
@@ -391,6 +421,7 @@ export default function Voice() {
 			connectionStuff.current.socket.emit('id', myPlayer.id);
 		}
 	}, [myPlayer?.id]);
+
 	return (
 		<div className="root">
 			<div className="top">
