@@ -188,6 +188,7 @@ export default function Settings({ open, onClose }: SettingsProps) {
 			<path d="M0 0h24v24H0z" fill="none" />
 			<path d="M11.67 3.87L9.9 2.1 0 12l9.9 9.9 1.77-1.77L3.54 12z" />
 		</svg>
+
 		{/* <div className="form-control m" style={{ color: '#e74c3c' }} onClick={() => {
 			ipcRenderer.send('alwaysOnTop', !settings.alwaysOnTop);
 			setSettings({
@@ -197,8 +198,10 @@ export default function Settings({ open, onClose }: SettingsProps) {
 		}}>
 			<input type="checkbox" checked={settings.alwaysOnTop} readOnly />Always on Top
 		</div> */}
+
 		<div className="settings-scroll">
 
+      {/* Choose Input Mic Dropdown */}
 			<div className="form-control m l" style={{ color: '#e74c3c' }}>
 				<label>Microphone</label>
 				<select value={settings.microphone} onChange={(ev) => {
@@ -215,8 +218,10 @@ export default function Settings({ open, onClose }: SettingsProps) {
 				</select>
 			</div>
 
+      {/* Microphone UV Meter */}
 			<MicrophoneSoundBar/>
 
+			{/* Choose Output Speaker Dropdown */}
 			<div className="form-control m l" style={{ color: '#e67e22' }}>
 				<label>Speaker</label>
 				<select value={settings.speaker} onChange={(ev) => {
@@ -233,32 +238,37 @@ export default function Settings({ open, onClose }: SettingsProps) {
 				</select>
 			</div>
 
+      {/* Test Speaker Button */}
 			<TestSpeakersButton/>
 
-			<div className="form-control" style={{ color: '#f1c40f' }} onClick={() => setSettings({
-				type: 'setOne',
-				action: ['pushToTalk', false]
-			})}>
-				<input type="radio" checked={!settings.pushToTalk} style={{ color: '#f1c40f' }} readOnly />
-				<label>Voice Activity</label>
-			</div>
-			<div className={`form-control${settings.pushToTalk ? '' : ' m'}`} style={{ color: '#f1c40f' }} onClick={() => setSettings({
-				type: 'setOne',
-				action: ['pushToTalk', true]
-			})}>
-				<input type="radio" checked={settings.pushToTalk} readOnly />
-				<label>Push to Talk</label>
-			</div>
-			{settings.pushToTalk &&
-				<div className="form-control m" style={{ color: '#f1c40f' }}>
-					<input spellCheck={false} type="text" value={settings.pushToTalkShortcut} readOnly onKeyDown={(ev) => setShortcut(ev, 'pushToTalkShortcut')} />
-				</div>
-			}
-			{!settings.pushToTalk && <div className="form-control l m" style={{ color: '#2ecc71' }}>
-				<label>Mute Shortcut</label>
-				<input spellCheck={false} type="text" value={settings.muteShortcut} readOnly onKeyDown={(ev) => setShortcut(ev, 'muteShortcut')} />
-			</div>
-			}
+			{/* Voice Activity / Push to Talk Setting */}
+			<div>
+        <div className="form-control" style={{ color: '#f1c40f' }} onClick={() => setSettings({
+          type: 'setOne',
+          action: ['pushToTalk', false]
+        })}>
+          <input type="radio" checked={!settings.pushToTalk} style={{ color: '#f1c40f' }} readOnly />
+          <label>Voice Activity</label>
+        </div>
+        <div className={`form-control${settings.pushToTalk ? '' : ' m'}`} style={{ color: '#f1c40f' }} onClick={() => setSettings({
+          type: 'setOne',
+          action: ['pushToTalk', true]
+        })}>
+          <input type="radio" checked={settings.pushToTalk} readOnly />
+          <label>Push to Talk</label>
+        </div>
+        {settings.pushToTalk &&
+        <div className="form-control m" style={{ color: '#f1c40f' }}>
+          <input spellCheck={false} type="text" value={settings.pushToTalkShortcut} readOnly onKeyDown={(ev) => setShortcut(ev, 'pushToTalkShortcut')} />
+        </div>
+        }
+        {!settings.pushToTalk && <div className="form-control l m" style={{ color: '#2ecc71' }}>
+          <label>Mute Shortcut</label>
+          <input spellCheck={false} type="text" value={settings.muteShortcut} readOnly onKeyDown={(ev) => setShortcut(ev, 'muteShortcut')} />
+        </div>
+        }
+      </div>
+
 			<div className="form-control l m" style={{ color: '#2ecc71' }}>
 				<label>Deafen Shortcut</label>
 				<input spellCheck={false} type="text" value={settings.deafenShortcut} readOnly onKeyDown={(ev) => setShortcut(ev, 'deafenShortcut')} />
