@@ -128,11 +128,22 @@ export default function Settings({ open, onClose }: SettingsProps) {
 				.map(d => {
 					let label = d.label;
 					if (d.deviceId === 'default') {
-						label = "Default";
+						label = "Default Device";
+
+            let match = /\((.+?)\)/.exec(d.label);
+            if (match && match[1])
+              label = `${label} - ${match[1]}`;
+					}
+					else if (d.deviceId === 'communications') {
+						label = "Default Communication";
+
+            let match = /\((.+?)\)/.exec(d.label);
+            if (match && match[1])
+              label = `${label} - ${match[1]}`;
 					} else {
-						let match = /\((.+?)\)/.exec(d.label);
-						if (match && match[1])
-							label = match[1];
+						// let match = /\((.+?)\)/.exec(d.label);
+						// if (match && match[1])
+							// label = match[1];
 					}
 					return {
 						id: d.deviceId,
