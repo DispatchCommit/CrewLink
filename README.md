@@ -2,18 +2,30 @@
 
 <br />
 <p align="center">
-  <a href="https://github.com/ottomated/CrewLink">
+  <a href="https://github.com/DispatchCommit/dispatchlink">
     <img src="logo.png" alt="Logo" width="80" height="80">
   </a>
 
-  <h3 align="center">CrewLink</h3>
+  <h3 align="center">DispatchLink</h3>
+  <div align="center">
+    <i>A custom fork of CrewLink</i>
+    <div>
+      <span>More settings</span>
+      <span>-</span>
+      <span>Vision matches hearing range</span>
+      <span>-</span>
+      <span>Improved UI</span>
+    </div>
+  </div>
 
   <p align="center">
-    Free, open, Among Us proximity voice chat.
+    Free, open, Among Us proximity voice chat forked from:
+    <a href="ottomated/CrewLink" target="_blank">ottomated/CrewLink</a>
+    .
     <br />
-    <a href="https://github.com/ottomated/CrewLink/issues">Report Bug</a>
+    <a href="https://github.com/DispatchCommit/dispatchlink/issues">Report Bug</a>
     ·
-    <a href="https://github.com/ottomated/CrewLink/issues">Request Feature</a>
+    <a href="https://github.com/DispatchCommit/dispatchlink/issues">Request Feature</a>
     ·
     <a href="#installation"><b>INSTALLATION INSTRUCTIONS</b></a>
   </p>
@@ -51,16 +63,17 @@ If you can, you should use a private server by deploying [this repository](https
 
 ## Development
 
-You only need to follow the below instructions if you are trying to modify this software. Otherwise, please download the latest version from the [github releases](https://github.com/ottomated/CrewLink/releases).
+You only need to follow the below instructions if you are trying to modify this software. Otherwise, please download the latest version from the [github releases](https://github.com/DispatchCommit/dispatchlink/releases).
 
 Server code is located at [ottomated/CrewLink-server](https://github.com/ottomated/CrewLink-server). Please use a local server for development purposes.
 
 ### Prerequisites
 
-This is an example of how to list things you need to use the software and how to install them.
+You must have Python, Node.js, and Yarn installed
+
 * [Python](https://www.python.org/downloads/)
 * [node.js](https://nodejs.org/en/download/)
-* yarn
+* [yarn](https://classic.yarnpkg.com/en/docs/install)
 ```sh
 npm install yarn -g
 ```
@@ -69,10 +82,10 @@ npm install yarn -g
 
 1. Clone the repo
 ```sh
-git clone https://github.com/ottomated/CrewLink.git
+git clone https://github.com/DispatchCommit/dispatchlink.git
 cd CrewLink
 ```
-2. Install NPM packages
+2. Install NPM packages with yarn
 ```sh
 yarn install
 ```
@@ -83,7 +96,7 @@ cp iohook\iohook.node node_modules\iohook\builds\electron-v80-win32-x64\build\Re
 cp iohook\uiohook.dll node_modules\iohook\builds\electron-v80-win32-x64\build\Release\
 ```
 3. Run the project
-```JS
+```sh
 yarn dev
 ```
 
@@ -106,5 +119,5 @@ Distributed under the GNU General Public License v3.0. See `LICENSE` for more in
 
 [license-shield]: https://img.shields.io/github/license/ottomated/CrewLink.svg?style=flat-square
 [license-url]: https://github.com/ottomated/CrewLink-server/blob/master/LICENSE
-[appveyor-shield]: https://img.shields.io/appveyor/build/ottomated/crewlink
-[appveyor-url]: https://ci.appveyor.com/project/ottomated/crewlink
+[appveyor-shield]: https://img.shields.io/appveyor/build/DispatchCommit/dispatchlink
+[appveyor-url]: https://ci.appveyor.com/project/DispatchCommit/dispatchlink
