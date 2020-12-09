@@ -426,7 +426,15 @@ export default function Voice() {
 		<div className="root">
 			<div className="top">
 				{myPlayer &&
-					<Avatar deafened={deafenedState} muted={mutedState} player={myPlayer} borderColor={connected ? '#2ecc71' : '#c0392b'} talking={talking} isAlive={!myPlayer.isDead} size={100} />
+					<Avatar
+            deafened={deafenedState}
+            muted={mutedState}
+            player={myPlayer}
+            borderColor={connected ? '#2ecc71' : '#c0392b'}
+            talking={talking}
+            isAlive={!myPlayer.isDead}
+            size={100}
+          />
 					// <div className="avatar" style={{ borderColor: talking ? '#2ecc71' : 'transparent' }}>
 					// 	<Canvas src={alive} color={playerColors[myPlayer.colorId][0]} shadow={playerColors[myPlayer.colorId][1]} />
 					// </div>
@@ -450,11 +458,14 @@ export default function Voice() {
 					otherPlayers.map(player => {
 						let connected = Object.values(socketPlayerIds).includes(player.id);
 						return (
-							<Avatar key={player.id} player={player}
+							<Avatar
+                key={player.id}
+                player={player}
 								talking={!connected || otherTalking[player.id]}
 								borderColor={connected ? '#2ecc71' : '#c0392b'}
 								isAlive={!otherDead[player.id]}
-								size={50} />
+								size={50}
+              />
 						);
 					})
 				}

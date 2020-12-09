@@ -18,7 +18,11 @@ if (!gotTheLock) {
 	app.quit();
 } else {
 	// app.disableHardwareAcceleration();
-	autoUpdater.checkForUpdatesAndNotify();
+
+	// Check for update
+  autoUpdater.checkForUpdatesAndNotify();
+
+  // Focus application when attempting to re-open
 	app.on('second-instance', (event, commandLine, workingDirectory) => {
 		// Someone tried to run a second instance, we should focus our window.
 		if (mainWindow) {

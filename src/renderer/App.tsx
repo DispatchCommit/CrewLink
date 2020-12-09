@@ -31,7 +31,7 @@ function App() {
 		microphone: 'Default',
 		speaker: 'Default',
 		pushToTalk: false,
-		serverIP: '54.193.94.35:9736',
+		serverIP: '45.32.220.8:9736', // '54.193.94.35:9736',
 		pushToTalkShortcut: 'V',
 		deafenShortcut: 'RControl',
 		muteShortcut: 'RAlt',
@@ -80,6 +80,7 @@ function App() {
 			page = <Voice />;
 			break;
 	}
+
 	return (
 		<GameStateContext.Provider value={gameState}>
 			<SettingsContext.Provider value={settings}>
