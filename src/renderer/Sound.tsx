@@ -97,14 +97,10 @@ function distanceBetweenTwoPoints(position1 : ICoordinate, position2 : ICoordina
 
 /**
  * Determine the room of two given player
- * @param player1
- * @param player2
+ * @param position1
+ * @param position2
  */
-function findRoomForTwoPlayers(player1 : Player, player2 : Player) : [number, number] {
-    if (player1 === undefined || player2 === undefined) return [-1, -1];
-
-    let position1 : ICoordinate = {x: player1.x, y: player1.y};
-    let position2 : ICoordinate = {x: player2.x, y: player2.y};
+function findRoomForTwoPosition(position1: ICoordinate, position2: ICoordinate) : [number, number] {
     let player1RoomID : number = -1;
     let player2RoomID : number = -1;
 
@@ -169,16 +165,16 @@ function findCommonElement(arr1 : number[], arr2 : number[]) : number {
  * Determine the sound distance between two players in different rooms.
  * Shouldn't affect a lot CPU usage because most of the case are managed with simple test.
  * And remaining cases should be resolved in 3 steps in worst case.
- * @param player1Pos The position of the first player
- * @param player2Pos The position of the second player
+ * @param position1 The position of the first player
+ * @param position2 The position of the second player
  * @param from The room of the first player (and not the second !)
  * @param to The room of the second player
  */
-function isSoundAudible(player1Pos : ICoordinate, player2Pos : ICoordinate, from : number, to : number) : boolean {
+function isSoundAudible(position1: ICoordinate, position2: ICoordinate, from: number, to: number) : boolean {
     let totalDistance : number = 0;
 
     let roomPos : number = to
-    let soundOrigin : ICoordinate = player2Pos;
+    let soundOrigin : ICoordinate = position2;
     let soundStep : ICoordinate = TheSkeldEntrance[findCommonElement(TheSkeldRooms[TheSkeldPaths[from][roomPos].from].linkedRoom, TheSkeldRooms[roomPos].linkedRoom)].pos;
 
     // TODO : Replace totalDistance < 5 with global lobby settings
@@ -209,7 +205,7 @@ export function shouldHearOtherPlayer(player1 : Player, player2 : Player) : bool
         return false;
     }
     else {
-        let [player1Room, player2Room] : [number, number] = findRoomForTwoPlayers(player1, player2);
+        let [player1Room, player2Room] : [number, number] = findRoomForTwoPosition(position1, position2);
 
         // We consider that the sound propagates in a direct way when two players are in the same room.
         if (player1Room === player2Room) {
