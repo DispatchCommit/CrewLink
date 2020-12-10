@@ -5,6 +5,7 @@ import * as t from "ts-interface-checker";
 // tslint:disable:object-literal-key-quotes
 
 export const IOffsets = t.iface([], {
+  "mapID": t.array("number"),
   "meetingHud": t.array("number"),
   "meetingHudCachePtr": t.array("number"),
   "meetingHudState": t.array("number"),

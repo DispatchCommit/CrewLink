@@ -18,6 +18,7 @@ const { IOffsets } = createCheckers(TI);
 const store = new Store<ISettings>();
 
 export interface IOffsets {
+	mapID: number[];
 	meetingHud: number[];
 	meetingHudCachePtr: number[];
 	meetingHudState: number[];
