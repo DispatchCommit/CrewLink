@@ -23,6 +23,18 @@
     "dist": "yarn compile && electron-builder --win --x64",
     "publish": "yarn compile && electron-builder --win --x64 --publish always"
   },
+  "iohook": {
+    "targets": [
+      "electron-80"
+    ],
+    "platforms": [
+      "win32"
+    ],
+    "arches": [
+      "x64",
+      "ia32"
+    ]
+  },
   "dependencies": {
     "ajv": "^6.12.6",
     "analyser-frequency-average": "^1.0.0",
