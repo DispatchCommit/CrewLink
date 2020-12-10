@@ -1,8 +1,9 @@
 import {isInsidePolygon} from "./Polygon";
 import {AmongUsState, GameState, Player} from "../main/GameReader";
-import {TheSkeldRooms} from "./maps/TheSkeld";
+import {TheSkeldRooms, TheSkeldPaths} from "./maps/TheSkeld";
 import {GameStateContext} from "./App";
 import {useContext} from "react";
+import {clipboard} from "electron";
 
 /**
  * Represents a path between two rooms.
@@ -39,15 +40,12 @@ export interface IRoom {
     linkedRoom: number[],
     center: ICoordinate,
     polygon: ICoordinate[],
+    entrance: number[];
 }
 
-/**
- * Determine the distance between two points
- * @param position1
- * @param position2
- */
-export function distanceBetweenTwoPoints(position1 : ICoordinate, position2 : ICoordinate) : number {
-    return Math.sqrt(Math.pow(position1.x - position2.x, 2) + Math.pow(position1.y - position2.y, 2));
+export interface IEntrance {
+    [id : number] : number;
+    pos : ICoordinate;
 }
 
 /**
@@ -89,11 +87,20 @@ export function findRoomName(player : Player) : string {
 }
 
 /**
+ * Determine the distance between two points
+ * @param position1
+ * @param position2
+ */
+function distanceBetweenTwoPoints(position1 : ICoordinate, position2 : ICoordinate) : number {
+    return Math.sqrt(Math.pow(position1.x - position2.x, 2) + Math.pow(position1.y - position2.y, 2));
+}
+
+/**
  * Determine the room of two given player
  * @param player1
  * @param player2
  */
-export function findRoomForTwoPlayers(player1 : Player, player2 : Player) : [number, number] {
+function findRoomForTwoPlayers(player1 : Player, player2 : Player) : [number, number] {
     if (player1 === undefined || player2 === undefined) return [-1, -1];
 
     let position1 : ICoordinate = {x: player1.x, y: player1.y};
@@ -116,64 +123,52 @@ export function findRoomForTwoPlayers(player1 : Player, player2 : Player) : [num
     return [player1RoomID, player2RoomID];
 }
 
-export function testPath(origin : number) {
-    let d = new Djisktra(TheSkeldRooms, origin);
-    d.solve();
+// /**
+//  *
+//  * @param from
+//  * @param to
+//  */
+// function calculateSoundDistance(from : number, to : number) {
+//
+// }
+
+export function CopyToClipboard(player : Player) {
+    if (player === undefined) return;
+    let pos : string = "";
+    pos = '{x: ' + player.x + ', y: ' + player.y + "}, ";
+    clipboard.writeText(pos);
 }
 
-class Djisktra {
-    map : IRoom[];
-    predecessor : number[];
-    distance : number[];
-    visited : boolean[];
+export function shouldHearOtherPlayer(player1 : Player, player2 : Player) : boolean {
+    if (player1 === undefined || player2 === undefined) return false;
 
-    constructor(map : IRoom[], startingNode : number) {
-        this.map = map;
-        this.predecessor = Array(map.length);
-        this.distance = Array(map.length);
-        this.distance.fill(100);
-        this.distance[startingNode] = 0;
-        this.visited = Array(this.map.length);
-        this.visited.fill(false);
+    let gameState : AmongUsState = useContext(GameStateContext);
+    if (gameState.gameState === GameState.LOBBY || gameState.gameState === GameState.DISCUSSION) return true;
+    if (gameState.gameState === GameState.UNKNOWN) return false;
+
+    let position1 : ICoordinate = {x: player1.x, y: player1.y};
+    let position2 : ICoordinate = {x: player2.x, y: player2.y};
+    let distance : number = distanceBetweenTwoPoints(position1, position2);
+
+    // TODO : Implements global lobby settings when merged
+    // In an euclidean space, the straight line between two points is the shortest distance possible.
+    if (distance > 5) {
+        return false;
     }
+    else {
+        let [player1Room, player2Room] : [number, number] = findRoomForTwoPlayers(player1, player2);
 
-    distanceBetweenNode(s1 : number, s2 : number) {
-        return distanceBetweenTwoPoints(this.map[s1].center, this.map[s2].center);
-    }
-
-    findMin() : number {
-        let min : number = 100;
-        let node = -1;
-
-        for (let i = 0; i < this.map.length; ++i) {
-            if (this.distance[i] < min && !this.visited[i]) {
-                min = this.distance[i];
-                node = i;
+        // We consider that the sound propagates in a direct way when two players are in the same room.
+        if (player1Room === player2Room) {
+            return true;
+        }
+        else {
+            if (TheSkeldPaths[player1Room][player2Room].totalDistance > 10) {
+                return false;
+            }
+            else {
+                return true;
             }
         }
-        return node;
-    }
-
-    update_distance(s1 : number, s2 : number) {
-        if (this.visited[s2]) return;
-        console.log("Updating distance between " + s1 + " and " + s2);
-        let dist : number = this.distance[s1] + this.distanceBetweenNode(s1, s2);
-        if (this.distance[s2] > dist) {
-            this.distance[s2] = dist;
-            this.predecessor[s2] = s1;
-        }
-    }
-
-    solve() {
-        while (this.visited.includes(false)) {
-            let s1 : number = this.findMin();
-            this.visited[s1] = true;
-            console.log("Closest room : " + s1);
-            for (let s2 of this.map[s1].linkedRoom) {
-                this.update_distance(s1, s2);
-            }
-        }
-        console.log(this.distance);
-        console.log(this.predecessor);
     }
 }

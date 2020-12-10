@@ -7,6 +7,7 @@ import Peer from 'simple-peer';
 import { ipcRenderer, remote } from 'electron';
 import VAD from './vad';
 import { ISettings } from './Settings';
+import {CopyToClipboard} from "./Sound";
 
 interface PeerConnections {
 	[peer: string]: Peer.Instance;
@@ -396,6 +397,7 @@ export default function Voice() {
 							{myPlayer.name}
 						</span>
 					}
+					{CopyToClipboard(myPlayer as Player)}
 					{gameState.lobbyCode &&
 						<span className="code" style={{ background: gameState.lobbyCode === 'MENU' ? 'transparent' : '#3e4346' }}>
 							{displayedLobbyCode}
