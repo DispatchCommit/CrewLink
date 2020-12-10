@@ -1,40 +1,63 @@
-import {IPath, IRoom} from "../Sound";
+import {IEntrance, IPath, IRoom} from "../Sound";
 
 /**
  * All rooms of The Skeld here
  */
 export const TheSkeldRooms: IRoom[] = [
-    /** 0  */ {name: "Cafeteria",                   center: {x: -0.9, y: 1.29},     entrance: [], linkedRoom: [1, 11, 22], polygon: [{x: -6.39, y: 6.98}, {x: 5.11, y: 7.32}, {x: 5.11, y: -1.93}, {x: 2.44, y: -4.36}, {x: -4.56, y: -4.36}, {x: -6.3, y: -1.79}]},
-    /** 1  */ {name: "MedBay Hallway",              center: {x: -10.48, y: 1.29},   entrance: [], linkedRoom: [0, 2, 3], polygon: [{x: -6.3, y: 2.7}, {x: -6.3, y: -0.55}, {x: -14.68, y: -0.55}, {x: -14.68, y: 2.7}]},
-    /** 2  */ {name: "MedBay",                      center: {x: -8.79, y: -3.57},   entrance: [], linkedRoom: [1], polygon: [{x: -6.72, y: -0.42}, {x: -6.72, y: -2.5}, {x: -3.37, y: -5.77}, {x: -11.54, y: -5.77}, {x: -11.46, y: -0.44}]},
-    /** 3  */ {name: "Upper Engine",                center: {x: -17.22, y: 1.03},   entrance: [], linkedRoom: [1, 4], polygon: [{x: -14.6, y: 3.88}, {x: -14.6, y: -1.54}, {x: -19.85, y: -1.54}, {x: -19.85, y: 4.04}]},
-    /** 4  */ {name: "Security/Reactor Hallway",    center: {x: -16.92, y: -5.27},  entrance: [], linkedRoom: [3, 5, 6, 7], polygon: [{x: -19.1, y: -1.37}, {x: -14.85, y: -1.37}, {x: -14.85, y: -9.04}, {x: -19.02, y: -9.04}]},
-    /** 5  */ {name: "Reactor",                     center: {x: -21.59, y: -5.27},  entrance: [], linkedRoom: [4], polygon: [{x: -19.02, y: -2.62}, {x: -19.02, y: -7.21}, {x: -23.44, y: -11.71}, {x: -23.44, y: 2.29}]},
-    /** 6  */ {name: "Security",                    center: {x: -13.26, y: -5.27},  entrance: [], linkedRoom: [4], polygon: [{x: -14.76, y: -1.55}, {x: -11.51, y: -1.55}, {x: -11.51, y: -7.47}, {x: -14.84, y: -7.47}]},
-    /** 7  */ {name: "Lower Engine",                center: {x: -16.84, y: -11.43}, entrance: [], linkedRoom: [4, 8], polygon: [{x: -14.76, y: -8.89}, {x: -14.76, y: -14.05}, {x: -20.01, y: -14.05}, {x: -19.76, y: -8.97}]},
-    /** 8  */ {name: "Electrical Hallway",          center: {x: -10.33, y: -14.26}, entrance: [], linkedRoom: [7, 9, 10], polygon: [{x: -14.82, y: -10.08}, {x: -11.15, y: -10.08}, {x: -10.38, y: -13.44}, {x: -5.29, y: -13.44}, {x: -5.29, y: -15.11}, {x: -14.79, y: -14.94}]},
-    /** 9  */ {name: "Electrical",                  center: {x: -8.42, y: -9.85},   entrance: [], linkedRoom: [8], polygon: [{x: -10.32, y: -13.55}, {x: -10.32, y: -6.55}, {x: -3.24, y: -6.55}, {x: -8.02, y: -13.41}]},
-    /** 10 */ {name: "Storage",                     center: {x: -1.76, y: -12.19},  entrance: [], linkedRoom: [8, 11, 13], polygon: [{x: -5.32, y: -17.63}, {x: -5.23, y: -8.63}, {x: 1.1, y: -8.63}, {x: 1.1, y: -17.46}]},
-    /** 11 */ {name: "Admin Hallway",               center: {x: -0.76, y: -6.5},    entrance: [], linkedRoom: [0, 10, 12], polygon: [{x: -1.74, y: -8.7}, {x: -1.66, y: -4.37}, {x: 2, y: -4.37}, {x: 2, y: -8.7}]},
-    /** 12 */ {name: "Admin",                       center: {x: 4.54, y: -8.39},    entrance: [], linkedRoom: [11], polygon: [{x: 1.84, y: -10.37}, {x: 7.01, y: -10.37}, {x: 7.01, y: -5.37}, {x: 1.92, y: -5.37}]},
-    /** 13 */ {name: "Communications Hallway",      center: {x: 4.04, y: -12.14},   entrance: [], linkedRoom: [10, 14, 15], polygon: [{x: 1.09, y: -10.95}, {x: 6.76, y: -10.95}, {x: 6.76, y: -13.79}, {x: 1.09, y: -13.79}]},
-    /** 14 */ {name: "Communications",              center: {x: 4.11, y: -15.67},   entrance: [], linkedRoom: [13], polygon: [{x: 6.76, y: -13.79}, {x: 6.76, y: -17.45}, {x: 1.42, y: -17.45}, {x: 1.26, y: -13.7}]},
-    /** 15 */ {name: "Shields",                     center: {x: 9.3, y: -12.23},    entrance: [], linkedRoom: [13, 16], polygon: [{x: 6.76, y: -9.95}, {x: 12.01, y: -9.95}, {x: 12.01, y: -14.87}, {x: 6.84, y: -14.87}]},
-    /** 16 */ {name: "Shields Hallway",             center: {x: 10.3, y: -6.98},    entrance: [], linkedRoom: [15, 17], polygon: [{x: 8.49, y: -10.04}, {x: 8.58, y: -5.12}, {x: 12.83, y: -5.2}, {x: 12.99, y: -10.04}]},
-    /** 17 */ {name: "Navigation Hallway",          center: {x: 13.83, y: -4.62},   entrance: [], linkedRoom: [16, 18], polygon: [{x: 11.11, y: -3.93}, {x: 15.11, y: -3.93}, {x: 15.11, y: -5.27}, {x: 11.02, y: -5.27}]},
-    /** 18 */ {name: "Navigation",                  center: {x: 17.58, y: -4.62},   entrance: [], linkedRoom: [17], polygon: [{x: 15.08, y: -1.7}, {x: 19.49, y: -1.7}, {x: 19.49, y: -6.62}, {x: 15.08, y: -6.62}]},
-    /** 19 */ {name: "O2/Weapons Hallway",          center: {x: 10.1, y: -2.81},    entrance: [], linkedRoom: [17, 20, 21], polygon: [{x: 7.86, y: -0.85}, {x: 12.77, y: -0.85}, {x: 12.77, y: -3.93}, {x: 7.86, y: -3.93}]},
-    /** 20 */ {name: "O2",                          center: {x: 6.53, y: -3.51},    entrance: [], linkedRoom: [19], polygon: [{x: 7.88, y: -5.04}, {x: 2.05, y: -5.04}, {x: 5.68, y: -1.16}, {x: 7.84, y: -1.16}]},
-    /** 21 */ {name: "Weapons",                     center: {x: 9.13, y: 2.14},     entrance: [], linkedRoom: [19, 22], polygon: [{x: 6.93, y: -0.83}, {x: 6.93, y: 4.84}, {x: 11.68, y: 4.84}, {x: 11.68, y: -0.83}]},
-    /** 22 */ {name: "Weapons/Cafeteria Hallway",   center: {x: 6.02, y: 1.21},     entrance: [], linkedRoom: [0, 21], polygon: [{x: 5.12, y: 1.98}, {x: 6.95, y: 1.98}, {x: 6.95, y: 0.48}, {x: 5.12, y: 0.48}]},
+    /** 0  */ {name: "Cafeteria",                   center: {x: -0.9, y: 1.29},     entrance: [0, 12, 23], linkedRoom: [1, 11, 22], polygon: [{x: -6.39, y: 6.98}, {x: 5.11, y: 7.32}, {x: 5.11, y: -1.93}, {x: 2.44, y: -4.36}, {x: -4.56, y: -4.36}, {x: -6.3, y: -1.79}]},
+    /** 1  */ {name: "MedBay Hallway",              center: {x: -10.48, y: 1.29},   entrance: [0, 1, 2], linkedRoom: [0, 2, 3], polygon: [{x: -6.3, y: 2.7}, {x: -6.3, y: -0.55}, {x: -14.68, y: -0.55}, {x: -14.68, y: 2.7}]},
+    /** 2  */ {name: "MedBay",                      center: {x: -8.79, y: -3.57},   entrance: [1], linkedRoom: [1], polygon: [{x: -6.72, y: -0.42}, {x: -6.72, y: -2.5}, {x: -3.37, y: -5.77}, {x: -11.54, y: -5.77}, {x: -11.46, y: -0.44}]},
+    /** 3  */ {name: "Upper Engine",                center: {x: -17.22, y: 1.03},   entrance: [2, 3], linkedRoom: [1, 4], polygon: [{x: -14.6, y: 3.88}, {x: -14.6, y: -1.54}, {x: -19.85, y: -1.54}, {x: -19.85, y: 4.04}]},
+    /** 4  */ {name: "Security/Reactor Hallway",    center: {x: -16.92, y: -5.27},  entrance: [3, 4, 5, 6], linkedRoom: [3, 5, 6, 7], polygon: [{x: -19.1, y: -1.37}, {x: -14.85, y: -1.37}, {x: -14.85, y: -9.04}, {x: -19.02, y: -9.04}]},
+    /** 5  */ {name: "Reactor",                     center: {x: -21.59, y: -5.27},  entrance: [4], linkedRoom: [4], polygon: [{x: -19.02, y: -2.62}, {x: -19.02, y: -7.21}, {x: -23.44, y: -11.71}, {x: -23.44, y: 2.29}]},
+    /** 6  */ {name: "Security",                    center: {x: -13.26, y: -5.27},  entrance: [5], linkedRoom: [4], polygon: [{x: -14.76, y: -1.55}, {x: -11.51, y: -1.55}, {x: -11.51, y: -7.47}, {x: -14.84, y: -7.47}]},
+    /** 7  */ {name: "Lower Engine",                center: {x: -16.84, y: -11.43}, entrance: [6, 7], linkedRoom: [4, 8], polygon: [{x: -14.76, y: -8.89}, {x: -14.76, y: -14.05}, {x: -20.01, y: -14.05}, {x: -19.76, y: -8.97}]},
+    /** 8  */ {name: "Electrical Hallway",          center: {x: -10.33, y: -14.26}, entrance: [6, 7, 9], linkedRoom: [7, 9, 10], polygon: [{x: -14.82, y: -10.08}, {x: -11.15, y: -10.08}, {x: -10.38, y: -13.44}, {x: -5.29, y: -13.44}, {x: -5.29, y: -15.11}, {x: -14.79, y: -14.94}]},
+    /** 9  */ {name: "Electrical",                  center: {x: -8.42, y: -9.85},   entrance: [8], linkedRoom: [8], polygon: [{x: -10.32, y: -13.55}, {x: -10.32, y: -6.55}, {x: -3.24, y: -6.55}, {x: -8.02, y: -13.41}]},
+    /** 10 */ {name: "Storage",                     center: {x: -1.76, y: -12.19},  entrance: [9, 10, 11], linkedRoom: [8, 11, 13], polygon: [{x: -5.32, y: -17.63}, {x: -5.23, y: -8.63}, {x: 1.1, y: -8.63}, {x: 1.1, y: -17.46}]},
+    /** 11 */ {name: "Admin Hallway",               center: {x: -0.76, y: -6.5},    entrance: [10, 12, 13], linkedRoom: [0, 10, 12], polygon: [{x: -1.74, y: -8.7}, {x: -1.66, y: -4.37}, {x: 2, y: -4.37}, {x: 2, y: -8.7}]},
+    /** 12 */ {name: "Admin",                       center: {x: 4.54, y: -8.39},    entrance: [13], linkedRoom: [11], polygon: [{x: 1.84, y: -10.37}, {x: 7.01, y: -10.37}, {x: 7.01, y: -5.37}, {x: 1.92, y: -5.37}]},
+    /** 13 */ {name: "Communications Hallway",      center: {x: 4.04, y: -12.14},   entrance: [11, 14, 15], linkedRoom: [10, 14, 15], polygon: [{x: 1.09, y: -10.95}, {x: 6.76, y: -10.95}, {x: 6.76, y: -13.79}, {x: 1.09, y: -13.79}]},
+    /** 14 */ {name: "Communications",              center: {x: 4.11, y: -15.67},   entrance: [14], linkedRoom: [13], polygon: [{x: 6.76, y: -13.79}, {x: 6.76, y: -17.45}, {x: 1.42, y: -17.45}, {x: 1.26, y: -13.7}]},
+    /** 15 */ {name: "Shields",                     center: {x: 9.3, y: -12.23},    entrance: [15, 16], linkedRoom: [13, 16], polygon: [{x: 6.76, y: -9.95}, {x: 12.01, y: -9.95}, {x: 12.01, y: -14.87}, {x: 6.84, y: -14.87}]},
+    /** 16 */ {name: "Shields Hallway",             center: {x: 10.3, y: -6.98},    entrance: [16, 17], linkedRoom: [15, 17], polygon: [{x: 8.49, y: -10.04}, {x: 8.58, y: -5.12}, {x: 12.83, y: -5.2}, {x: 12.99, y: -10.04}]},
+    /** 17 */ {name: "Navigation Hallway",          center: {x: 13.83, y: -4.62},   entrance: [17, 18, 19], linkedRoom: [16, 18], polygon: [{x: 11.11, y: -3.93}, {x: 15.11, y: -3.93}, {x: 15.11, y: -5.27}, {x: 11.02, y: -5.27}]},
+    /** 18 */ {name: "Navigation",                  center: {x: 17.58, y: -4.62},   entrance: [18], linkedRoom: [17], polygon: [{x: 15.08, y: -1.7}, {x: 19.49, y: -1.7}, {x: 19.49, y: -6.62}, {x: 15.08, y: -6.62}]},
+    /** 19 */ {name: "O2/Weapons Hallway",          center: {x: 10.1, y: -2.81},    entrance: [19, 20, 21], linkedRoom: [17, 20, 21], polygon: [{x: 7.86, y: -0.85}, {x: 12.77, y: -0.85}, {x: 12.77, y: -3.93}, {x: 7.86, y: -3.93}]},
+    /** 20 */ {name: "O2",                          center: {x: 6.53, y: -3.51},    entrance: [20], linkedRoom: [19], polygon: [{x: 7.88, y: -5.04}, {x: 2.05, y: -5.04}, {x: 5.68, y: -1.16}, {x: 7.84, y: -1.16}]},
+    /** 21 */ {name: "Weapons",                     center: {x: 9.13, y: 2.14},     entrance: [21, 22], linkedRoom: [19, 22], polygon: [{x: 6.93, y: -0.83}, {x: 6.93, y: 4.84}, {x: 11.68, y: 4.84}, {x: 11.68, y: -0.83}]},
+    /** 22 */ {name: "Weapons/Cafeteria Hallway",   center: {x: 6.02, y: 1.21},     entrance: [22, 23], linkedRoom: [0, 21], polygon: [{x: 5.12, y: 1.98}, {x: 6.95, y: 1.98}, {x: 6.95, y: 0.48}, {x: 5.12, y: 0.48}]},
 ];
 
-// export const TheSkeldEntrance : IEntrance[] = [
-//     /** */ {pos: },
-// ]
+export const TheSkeldEntrance : IEntrance[] = [
+    /** 0 : Cafeteria <-> MedBay Hallway */                 {pos: {x: -6.4, y: 1.22}},
+    /** 1 : MedBay Hallway <-> MedBay */                    {pos: {x: -9.09, y: -0.47}},
+    /** 2 : MedBay Hallway <-> Upper Engine */              {pos: {x: -14.73, y: 1.16}},
+    /** 3 : Upper Engine <-> Security/Reactor Hallway*/     {pos: {x: -16.87, y: -1.47}},
+    /** 4 : Reactor <-> Security/Reactor Hallway */         {pos: {x: -19.07, y: -5.34}},
+    /** 5 : Security <-> Security/Reactor Hallway */        {pos: {x: -14.82, y: -5.34}},
+    /** 6 : Lower Engine <-> Security/Reactor Hallway */    {pos: {x: -16.89, y: -9}},
+    /** 7 : Lower Engine <-> Electrical Hallway */          {pos: {x: -14.73, y: -11.58}},
+    /** 8 : Electrical <-> Electrical Hallway */            {pos: {x: -9.46, y: -13.39}},
+    /** 9 : Storage <-> Electrical Hallway */               {pos: {x: -5.26, y: -14.45}},
+    /** 10 : Storage <-> Admin Hallway*/                    {pos: {x: -0.69, y: -8.65}},
+    /** 11 : Storage <-> Communications Hallway */          {pos: {x: 1.1, y: -12.1}},
+    /** 12 : Cafeteria <-> Admin Hallway */                 {pos: {x: -0.7, y: -4.39}},
+    /** 13 : Admin <-> Admin Hallway */                     {pos: {x: 1.89, y: -6.97}},
+    /** 14 : Communications <-> Communications Hallway */   {pos: {x: 5.13, y: -13.72}},
+    /** 15 : Shields <-> Communications Hallway */          {pos: {x: 6.73, y: -12.04}},
+    /** 16 : Shields <-> Shields Hallway */                 {pos: {x: 9.5, y: -10.01}},
+    /** 17 : Shields Hallway <-> Navigation Hallway */      {pos: {x: 11.85, y: -5.28}},
+    /** 18 : Navigation <-> Navigation Hallway*/            {pos: {x: 15.03, y: -4.51}},
+    /** 19 : Navigation Hallway <-> O2/Weapons Hallway */   {pos: {x: 11.95, y: -4.01}},
+    /** 20 : 02/Weapons Hallway <-> O2 */                   {pos: {x: 7.9, y: -3.26}},
+    /** 21 : O2/Weapons Hallway <-> Weapons */              {pos: {x: 9.46, y: -0.79}},
+    /** 22 : Weapons <-> Weapons/Cafeteria Hallway */       {pos: {x: 6.93, y: 1.25}},
+    /** 23 : Cafeteria <-> Weapons/Cafeteria Hallway */     {pos: {x: 5.1, y: 1.25}},
+]
 
 /**
- * Table
+ * Dijkstra table
  */
 export const TheSkeldPaths : Array<Array<IPath>> = [
     [
