@@ -1,6 +1,6 @@
 import {isInsidePolygon} from "./Polygon";
 import {AmongUsState, GameState, Player} from "../main/GameReader";
-import {TheSkeldRooms, TheSkeldPaths} from "./maps/TheSkeld";
+import {TheSkeldRooms, TheSkeldPaths, TheSkeldEntrance} from "./maps/TheSkeld";
 import {GameStateContext} from "./App";
 import {useContext} from "react";
 import {clipboard} from "electron";
@@ -123,20 +123,73 @@ function findRoomForTwoPlayers(player1 : Player, player2 : Player) : [number, nu
     return [player1RoomID, player2RoomID];
 }
 
-// /**
-//  *
-//  * @param from
-//  * @param to
-//  */
-// function calculateSoundDistance(from : number, to : number) {
-//
-// }
+/**
+ * Only used in DEVELOPMENT for mapping
+ * @param x
+ * @constructor
+ */
+function Round(x : number) : number {
+    return Math.round(x * 100) / 100;
+}
 
+/**
+ * Only used in DEVELOPMENT for mapping
+ * @param player
+ * @constructor
+ */
 export function CopyToClipboard(player : Player) {
     if (player === undefined) return;
     let pos : string = "";
-    pos = '{x: ' + player.x + ', y: ' + player.y + "}, ";
+    pos = '{x: ' + Round(player.x) + ', y: ' + Round(player.y) + "}, ";
     clipboard.writeText(pos);
+}
+
+/**
+ * Find a common element in two array with unique values.
+ * O(n+m)
+ * @param arr1 First array
+ * @param arr2 Second array
+ */
+function findCommonElement(arr1 : number[], arr2 : number[]) : number {
+    let i = 0;
+    let j = 0;
+    while (arr1[i] < arr2[j]) {
+        i++;
+    }
+    while (arr2[j] < arr1[i]) {
+        j++;
+    }
+    if (arr1[i] == arr2[j]) {
+        return arr1[i];
+    }
+    return -1;
+}
+
+/**
+ * Determine the sound distance between two players in different rooms.
+ * Shouldn't affect a lot CPU usage because most of the case are managed with simple test.
+ * And remaining cases should be resolved in 3 steps in worst case.
+ * @param player1Pos The position of the first player
+ * @param player2Pos The position of the second player
+ * @param from The room of the first player (and not the second !)
+ * @param to The room of the second player
+ */
+function isSoundAudible(player1Pos : ICoordinate, player2Pos : ICoordinate, from : number, to : number) : boolean {
+    let totalDistance : number = 0;
+
+    let roomPos : number = to
+    let soundOrigin : ICoordinate = player2Pos;
+    let soundStep : ICoordinate = TheSkeldEntrance[findCommonElement(TheSkeldRooms[TheSkeldPaths[from][roomPos].from].linkedRoom, TheSkeldRooms[roomPos].linkedRoom)].pos;
+
+    // TODO : Replace totalDistance < 5 with global lobby settings
+    while (TheSkeldPaths[from][roomPos].from !== from) {
+        totalDistance += distanceBetweenTwoPoints(soundOrigin, soundStep);
+        soundOrigin = soundStep;
+        roomPos = TheSkeldPaths[from][roomPos].from;
+        soundStep = TheSkeldEntrance[findCommonElement(TheSkeldRooms[TheSkeldPaths[from][roomPos].from].linkedRoom, TheSkeldRooms[roomPos].linkedRoom)].pos;
+        if (totalDistance > 5) return false;
+    }
+    return true;
 }
 
 export function shouldHearOtherPlayer(player1 : Player, player2 : Player) : boolean {
@@ -167,7 +220,7 @@ export function shouldHearOtherPlayer(player1 : Player, player2 : Player) : bool
                 return false;
             }
             else {
-                return true;
+                return isSoundAudible(position1, position2, player1Room, player2Room);
             }
         }
     }
