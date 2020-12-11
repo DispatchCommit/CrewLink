@@ -404,7 +404,6 @@ export default function Voice() {
 							{myPlayer.name}
 						</span>
 					}
-					VERSION WITH SOUND DISTANCE
 					{gameState.lobbyCode &&
 						<span className="code" style={{ background: gameState.lobbyCode === 'MENU' ? 'transparent' : '#3e4346' }}>
 							{displayedLobbyCode}

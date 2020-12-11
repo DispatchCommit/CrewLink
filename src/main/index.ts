@@ -18,7 +18,9 @@ if (!gotTheLock) {
 	app.quit();
 } else {
 	// app.disableHardwareAcceleration();
-	autoUpdater.checkForUpdatesAndNotify();
+
+	// TODO : Remettre la mise à jour auto pour le merge.
+	// autoUpdater.checkForUpdatesAndNotify();
 	app.on('second-instance', (event, commandLine, workingDirectory) => {
 		// Someone tried to run a second instance, we should focus our window.
 		if (mainWindow) {
@@ -30,9 +32,9 @@ if (!gotTheLock) {
 
 	function createMainWindow() {
 		const window = new BrowserWindow({
-			width: 1920,
-			height: 1080,
-			resizable: false,
+			width: 250,
+			height: 350,
+			resizable: isDevelopment,
 			frame: false,
 			fullscreenable: false,
 			maximizable: false,
