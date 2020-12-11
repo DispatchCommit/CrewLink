@@ -7,7 +7,7 @@ import Peer from 'simple-peer';
 import { ipcRenderer, remote } from 'electron';
 import VAD from './vad';
 import { ISettings } from './Settings';
-import {CopyToClipboard} from "./Sound";
+import {shouldHearOtherPlayer} from "./Sound";
 
 interface PeerConnections {
 	[peer: string]: Peer.Instance;
@@ -99,7 +99,7 @@ function calculateVoiceAudio(state: AmongUsState, settings: ISettings, me: Playe
 	} else {
 		gain.gain.value = 0;
 	}
-	if (gain.gain.value === 1 && Math.sqrt(Math.pow(panPos[0], 2) + Math.pow(panPos[1], 2)) > 7) {
+	if (gain.gain.value === 1 && !shouldHearOtherPlayer(me, other, state)) {
 		gain.gain.value = 0;
 	}
 }
@@ -352,8 +352,15 @@ export default function Voice() {
 		for (let k of Object.keys(socketPlayerIds)) {
 			playerSocketIds[socketPlayerIds[k]] = k;
 		}
+		console.clear();
 		for (let player of otherPlayers) {
 			const audio = audioElements.current[playerSocketIds[player.id]];
+			if (shouldHearOtherPlayer(myPlayer!, player, gameState)) {
+				console.log("Vous devez entendre " + player.name);
+			}
+			else {
+				console.log("Vous ne devez pas entendre " + player.name);
+			}
 			if (audio) {
 				calculateVoiceAudio(gameState, settingsRef.current, myPlayer!, player, audio.gain, audio.pan);
 				if (connectionStuff.current.deafened) {
@@ -397,7 +404,7 @@ export default function Voice() {
 							{myPlayer.name}
 						</span>
 					}
-					{CopyToClipboard(myPlayer as Player)}
+					VERSION WITH SOUND DISTANCE
 					{gameState.lobbyCode &&
 						<span className="code" style={{ background: gameState.lobbyCode === 'MENU' ? 'transparent' : '#3e4346' }}>
 							{displayedLobbyCode}

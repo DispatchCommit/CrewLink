@@ -58,10 +58,10 @@ export function findRoomName(player : Player) : string {
         switch (gameState.gameState) {
             case GameState.DISCUSSION:
                 return "Discussion";
-            case GameState.LOBBY:
-                return "Lobby";
-            case GameState.MENU:
-                return "Menu";
+            // case GameState.LOBBY:
+            //     return "Lobby";
+            // case GameState.MENU:
+            //     return "Menu";
             case GameState.UNKNOWN:
                 return "Unknown";
             default:
@@ -99,7 +99,7 @@ function distanceBetweenTwoPoints(position1 : ICoordinate, position2 : ICoordina
  * @param position1
  * @param position2
  */
-function findRoomForTwoPosition(position1: ICoordinate, position2: ICoordinate) : [number, number] {
+export function findRoomForTwoPosition(position1: ICoordinate, position2: ICoordinate) : [number, number] {
     let player1RoomID : number = -1;
     let player2RoomID : number = -1;
 
@@ -116,28 +116,6 @@ function findRoomForTwoPosition(position1: ICoordinate, position2: ICoordinate) 
         }
     }
     return [player1RoomID, player2RoomID];
-}
-
-/**
- * Only used in DEVELOPMENT for mapping
- * @param x
- * @constructor
- */
-function Round(x : number) : number {
-    return Math.round(x * 100) / 100;
-}
-
-/**
- * Only used in DEVELOPMENT for mapping
- * @param player
- * @constructor
- */
-export function CopyToClipboard(player : Player) {
-    const {clipboard} = require("electron");
-    if (player === undefined) return;
-    let pos : string = "";
-    pos = '{x: ' + Round(player.x) + ', y: ' + Round(player.y) + "}, ";
-    clipboard.writeText(pos);
 }
 
 /**
@@ -164,11 +142,7 @@ function isSoundAudible(position1: ICoordinate, position2: ICoordinate, from: nu
 
     let roomPos : number = to
     let soundOrigin : ICoordinate = position2;
-    // TODO : Error might come from here (algorithm for finding common element look shitty).
     let common : number = findCommonElement(TheSkeldRooms[TheSkeldPaths[from][roomPos].from].entrance, TheSkeldRooms[roomPos].entrance);
-    console.log(common);
-    console.log(TheSkeldRooms[TheSkeldPaths[from][roomPos].from].entrance);
-    console.log(TheSkeldRooms[roomPos].entrance);
     let soundStep : ICoordinate = TheSkeldEntrance[common].pos;
 
     // TODO : Replace totalDistance < 5 with global lobby settings
@@ -177,15 +151,14 @@ function isSoundAudible(position1: ICoordinate, position2: ICoordinate, from: nu
         soundOrigin = soundStep;
         roomPos = TheSkeldPaths[from][roomPos].from;
         soundStep = TheSkeldEntrance[findCommonElement(TheSkeldRooms[TheSkeldPaths[from][roomPos].from].entrance, TheSkeldRooms[roomPos].entrance)].pos;
-        if (totalDistance > 5) return false;
+        if (totalDistance > 4) return false;
     }
     return true;
 }
 
-export function shouldHearOtherPlayer(player1 : Player, player2 : Player) : boolean {
+export function shouldHearOtherPlayer(player1 : Player, player2 : Player, gameState : AmongUsState) : boolean {
     if (player1 === undefined || player2 === undefined) return false;
 
-    let gameState : AmongUsState = useContext(GameStateContext);
     if (gameState.gameState === GameState.LOBBY || gameState.gameState === GameState.DISCUSSION) return true;
     if (gameState.gameState === GameState.UNKNOWN) return false;
 
@@ -195,7 +168,7 @@ export function shouldHearOtherPlayer(player1 : Player, player2 : Player) : bool
 
     // TODO : Implements global lobby settings when merged
     // In an euclidean space, the straight line between two points is the shortest distance possible.
-    if (distance > 5) {
+    if (distance > 4) {
         return false;
     }
     else {
