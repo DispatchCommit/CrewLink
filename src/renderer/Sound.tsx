@@ -111,7 +111,7 @@ export function findRoomForTwoPosition(position1: ICoordinate, position2: ICoord
         if (player2RoomID === -1) {
             player2RoomID = isInsidePolygon(TheSkeldRooms[i].polygon, position2) ? i : -1;
         }
-        if (player1RoomID !== -1 && player2RoomID === -1) {
+        if (player1RoomID !== -1 && player2RoomID !== -1) {
             break;
         }
     }
@@ -180,11 +180,13 @@ export function shouldHearOtherPlayer(player1 : Player, player2 : Player, gameSt
             return true;
         }
         else {
+            // If distance between these two rooms is superior to 10,
+            // the sound distance is most likely to be superior to 4.
             if (TheSkeldPaths[player1Room][player2Room].totalDistance > 10) {
                 return false;
             }
             else {
-                return isSoundAudible(position1, position2, player1Room, player2Room);
+                return isSoundAudible(position1, position2, player1Room, player2Room);;
             }
         }
     }

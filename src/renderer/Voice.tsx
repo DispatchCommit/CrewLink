@@ -352,15 +352,8 @@ export default function Voice() {
 		for (let k of Object.keys(socketPlayerIds)) {
 			playerSocketIds[socketPlayerIds[k]] = k;
 		}
-		console.clear();
 		for (let player of otherPlayers) {
 			const audio = audioElements.current[playerSocketIds[player.id]];
-			if (shouldHearOtherPlayer(myPlayer!, player, gameState)) {
-				console.log("Vous devez entendre " + player.name);
-			}
-			else {
-				console.log("Vous ne devez pas entendre " + player.name);
-			}
 			if (audio) {
 				calculateVoiceAudio(gameState, settingsRef.current, myPlayer!, player, audio.gain, audio.pan);
 				if (connectionStuff.current.deafened) {
