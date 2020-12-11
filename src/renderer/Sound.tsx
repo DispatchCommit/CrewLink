@@ -3,7 +3,6 @@ import {AmongUsState, GameState, Player} from "../main/GameReader";
 import {TheSkeldRooms, TheSkeldPaths, TheSkeldEntrance} from "./maps/TheSkeld";
 import {GameStateContext} from "./App";
 import {useContext} from "react";
-import {clipboard} from "electron";
 
 /**
  * Represents a path between two rooms.
@@ -134,6 +133,7 @@ function Round(x : number) : number {
  * @constructor
  */
 export function CopyToClipboard(player : Player) {
+    const {clipboard} = require("electron");
     if (player === undefined) return;
     let pos : string = "";
     pos = '{x: ' + Round(player.x) + ', y: ' + Round(player.y) + "}, ";
@@ -147,18 +147,7 @@ export function CopyToClipboard(player : Player) {
  * @param arr2 Second array
  */
 function findCommonElement(arr1 : number[], arr2 : number[]) : number {
-    let i = 0;
-    let j = 0;
-    while (arr1[i] < arr2[j]) {
-        i++;
-    }
-    while (arr2[j] < arr1[i]) {
-        j++;
-    }
-    if (arr1[i] == arr2[j]) {
-        return arr1[i];
-    }
-    return -1;
+    return arr1.filter(val => arr2.includes(val))[0];
 }
 
 /**
@@ -175,14 +164,19 @@ function isSoundAudible(position1: ICoordinate, position2: ICoordinate, from: nu
 
     let roomPos : number = to
     let soundOrigin : ICoordinate = position2;
-    let soundStep : ICoordinate = TheSkeldEntrance[findCommonElement(TheSkeldRooms[TheSkeldPaths[from][roomPos].from].linkedRoom, TheSkeldRooms[roomPos].linkedRoom)].pos;
+    // TODO : Error might come from here (algorithm for finding common element look shitty).
+    let common : number = findCommonElement(TheSkeldRooms[TheSkeldPaths[from][roomPos].from].entrance, TheSkeldRooms[roomPos].entrance);
+    console.log(common);
+    console.log(TheSkeldRooms[TheSkeldPaths[from][roomPos].from].entrance);
+    console.log(TheSkeldRooms[roomPos].entrance);
+    let soundStep : ICoordinate = TheSkeldEntrance[common].pos;
 
     // TODO : Replace totalDistance < 5 with global lobby settings
     while (TheSkeldPaths[from][roomPos].from !== from) {
         totalDistance += distanceBetweenTwoPoints(soundOrigin, soundStep);
         soundOrigin = soundStep;
         roomPos = TheSkeldPaths[from][roomPos].from;
-        soundStep = TheSkeldEntrance[findCommonElement(TheSkeldRooms[TheSkeldPaths[from][roomPos].from].linkedRoom, TheSkeldRooms[roomPos].linkedRoom)].pos;
+        soundStep = TheSkeldEntrance[findCommonElement(TheSkeldRooms[TheSkeldPaths[from][roomPos].from].entrance, TheSkeldRooms[roomPos].entrance)].pos;
         if (totalDistance > 5) return false;
     }
     return true;
@@ -206,6 +200,7 @@ export function shouldHearOtherPlayer(player1 : Player, player2 : Player) : bool
     }
     else {
         let [player1Room, player2Room] : [number, number] = findRoomForTwoPosition(position1, position2);
+        if (player1Room === -1 || player2Room === -1) return false;
 
         // We consider that the sound propagates in a direct way when two players are in the same room.
         if (player1Room === player2Room) {
