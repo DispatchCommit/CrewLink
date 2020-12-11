@@ -31,7 +31,7 @@ function App() {
 		microphone: 'Default',
 		speaker: 'Default',
 		pushToTalk: false,
-		serverIP: '45.32.220.8:9736', // '54.193.94.35:9736',
+		serverIP: 'https://public2.crewl.ink', // '45.32.220.8:9736', // '54.193.94.35:9736',
 		pushToTalkShortcut: 'V',
 		deafenShortcut: 'RControl',
 		muteShortcut: 'RAlt',
