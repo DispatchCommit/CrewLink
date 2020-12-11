@@ -182,7 +182,7 @@ export default function Voice() {
 	const connectionStuff = useRef<ConnectionStuff>({ pushToTalk: settings.pushToTalk, deafened: false, muted: false } as any);
 	useEffect(() => {
 		// Connect to voice relay server
-		connectionStuff.current.socket = io(`ws://${settings.serverIP}`, { transports: ['websocket'] });
+		connectionStuff.current.socket = io(settings.serverIP, { transports: ['websocket'] });
 		const { socket } = connectionStuff.current;
 
 		socket.on('connect', () => {
