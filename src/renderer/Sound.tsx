@@ -186,7 +186,7 @@ export function shouldHearOtherPlayer(player1 : Player, player2 : Player, gameSt
                 return false;
             }
             else {
-                return isSoundAudible(position1, position2, player1Room, player2Room);;
+                return isSoundAudible(position1, position2, player1Room, player2Room);
             }
         }
     }
