@@ -14,4 +14,11 @@ export interface ISettings {
 	},
 	hideCode: boolean;
 	enableSpatialAudio: boolean;
+	localLobbySettings: {
+		maxDistance: number;
+	}
+}
+
+export interface ILobbySettings {
+	maxDistance: number;
 }

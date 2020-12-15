@@ -4,7 +4,6 @@ import patcher from '../patcher';
 import { GameState, AmongUsState, Player } from '../common/AmongUsState';
 import { IOffsets } from './IOffsets';
 
-
 interface ValueType<T> {
 	read(buffer: BufferSource, offset: number): T;
 	SIZE: number;
@@ -149,11 +148,17 @@ export default class GameReader {
 			}
 			if (newGameCode) this.gameCode = newGameCode;
 
+			const hostId = this.readMemory<number>('uint32', this.gameAssembly.modBaseAddr, this.offsets.hostId);
+			const clientId = this.readMemory<number>('uint32', this.gameAssembly.modBaseAddr, this.offsets.clientId);
+
 			const newState = {
 				lobbyCode: this.gameCode,
 				players,
 				gameState: state,
-				oldGameState: this.oldGameState
+				oldGameState: this.oldGameState,
+				isHost: (hostId && clientId && hostId === clientId) as boolean,
+				hostId: hostId,
+				clientId: clientId
 			};
 			const patch = patcher.diff(this.lastState, newState);
 			if (patch) {
