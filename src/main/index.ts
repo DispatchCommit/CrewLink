@@ -42,7 +42,9 @@ function createMainWindow() {
 	mainWindowState.manage(window);
 
 	if (isDevelopment) {
-		window.webContents.openDevTools();
+		window.webContents.openDevTools({
+      mode: 'detach',
+    });
 	}
 
 	if (isDevelopment) {
