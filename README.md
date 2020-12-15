@@ -14,18 +14,24 @@
     <a href="https://github.com/ottomated/CrewLink/issues">Report Bug</a>
     ·
     <a href="https://github.com/ottomated/CrewLink/issues">Request Feature</a>
+    ·
+    <a href="#installation"><b>INSTALLATION INSTRUCTIONS</b></a>
+  </p>
+  <p align="center">
+  <b><a href="https://paypal.me/ottomated">DONATE TO THE PROJECT</a></b>
+  (all donations will be used for server costs or paying for college)
   </p>
 </p>
-
 
 
 <!-- TABLE OF CONTENTS -->
 ## Table of Contents
 
 * [About the Project](#about-the-project)
-* [Development](#getting-started)
+* [Installation](#installation)
+* [Development](#development)
   * [Prerequisites](#prerequisites)
-  * [Installation](#installation)
+  * [Setup](#setup)
 * [Contributing](#contributing)
 * [License](#license)
 
@@ -42,6 +48,10 @@ Download the latest version from [releases](https://github.com/ottomated/CrewLin
 
 If you can, you should use a private server by deploying [this repository](https://github.com/ottomated/CrewLink-server).
 
+### Setup Instructions (click)
+
+[![Setup Video](https://img.youtube.com/vi/_8F4f5iQEIc/0.jpg)](https://www.youtube.com/watch?v=_8F4f5iQEIc "CrewLink Setup Instructions")
+
 ## Development
 
 You only need to follow the below instructions if you are trying to modify this software. Otherwise, please download the latest version from the [github releases](https://github.com/ottomated/CrewLink/releases).
@@ -51,13 +61,14 @@ Server code is located at [ottomated/CrewLink-server](https://github.com/ottomat
 ### Prerequisites
 
 This is an example of how to list things you need to use the software and how to install them.
+* [Python](https://www.python.org/downloads/)
 * [node.js](https://nodejs.org/en/download/)
 * yarn
 ```sh
 npm install yarn -g
 ```
 
-### Installation
+### Setup
 
 1. Clone the repo
 ```sh
