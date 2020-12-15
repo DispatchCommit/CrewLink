@@ -36,7 +36,7 @@ const store = new Store<ISettings>({
 		'1.1.5': store => {
 			const serverURL = store.get('serverURL');
 			if (serverURL === 'http://54.193.94.35:9736') {
-				store.set('serverURL', 'https://crewl.ink');
+				store.set('serverURL', 'https://public2.crewl.ink');
 			}
 		},
 		'1.1.6': store => {
@@ -65,12 +65,16 @@ const store = new Store<ISettings>({
 		},
 		serverURL: {
 			type: 'string',
-			default: 'https://crewl.ink',
+			default: 'https://public2.crewl.ink',
 			format: 'uri'
 		},
 		pushToTalkShortcut: {
 			type: 'string',
 			default: 'V'
+		},
+		muteShortcut: {
+			type: 'string',
+			default: 'RAlt'
 		},
 		deafenShortcut: {
 			type: 'string',
@@ -102,7 +106,7 @@ const store = new Store<ISettings>({
 
 store.onDidChange('serverURL', (newUrl) => {
 	if (newUrl === 'http://54.193.94.35:9736') {
-		store.set('serverURL', 'https://crewl.ink');
+		store.set('serverURL', 'https://public2.crewl.ink');
 	}
 });
 
@@ -143,11 +147,11 @@ function URLInput({ initialURL, onValidURL }: URLInputProps) {
 	}, [initialURL]);
 
 	function onChange(event: React.ChangeEvent<HTMLInputElement>) {
-		setCurrentURL(event.target.value);
+    const eventValue = event.target.value.trim();
 
-		if (validateURL(event.target.value)) {
+		if (validateURL(eventValue)) {
 			setURLValid(true);
-			onValidURL(event.target.value);
+			onValidURL(eventValue);
 		} else {
 			setURLValid(false);
 		}
@@ -228,8 +232,13 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 			<path d="M0 0h24v24H0z" fill="none" />
 			<path d="M11.67 3.87L9.9 2.1 0 12l9.9 9.9 1.77-1.77L3.54 12z" />
 		</svg>
+
+
+    {/* Settings Menu */}
 		<div className="settings-scroll">
 
+
+      {/* Mic Settings */}
 			<div className="form-control m l" style={{ color: '#e74c3c' }}>
 				<label>Microphone</label>
 				<select value={settings.microphone} onChange={(ev) => {
@@ -244,8 +253,13 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 						))
 					}
 				</select>
+
+        {/* UV Meter */}
 				{open && <MicrophoneSoundBar microphone={settings.microphone} />}
 			</div>
+
+
+      {/* Speaker Settings */}
 			<div className="form-control m l" style={{ color: '#e67e22' }}>
 				<label>Speaker</label>
 				<select value={settings.speaker} onChange={(ev) => {
@@ -260,32 +274,51 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 						))
 					}
 				</select>
+
+        {/* Test Speakers Button */}
 				{open && <TestSpeakersButton speaker={settings.speaker} />}
 			</div>
 
+
+      {/* Voice Activity vs. Push To Talk */}
 			<div className="form-control" style={{ color: '#f1c40f' }} onClick={() => setSettings({
 				type: 'setOne',
 				action: ['pushToTalk', false]
 			})}>
-				<input type="checkbox" checked={!settings.pushToTalk} style={{ color: '#f1c40f' }} readOnly />
+				<input type="radio" checked={!settings.pushToTalk} style={{ color: '#f1c40f' }} readOnly />
 				<label>Voice Activity</label>
 			</div>
 			<div className={`form-control${settings.pushToTalk ? '' : ' m'}`} style={{ color: '#f1c40f' }} onClick={() => setSettings({
 				type: 'setOne',
 				action: ['pushToTalk', true]
 			})}>
-				<input type="checkbox" checked={settings.pushToTalk} readOnly />
+				<input type="radio" checked={settings.pushToTalk} readOnly />
 				<label>Push to Talk</label>
 			</div>
+
+      {/* Push To Talk Key */}
 			{settings.pushToTalk &&
 				<div className="form-control m" style={{ color: '#f1c40f' }}>
 					<input spellCheck={false} type="text" value={settings.pushToTalkShortcut} readOnly onKeyDown={(ev) => setShortcut(ev, 'pushToTalkShortcut')} />
 				</div>
 			}
+
+
+			{/* Mute Shortcut */}
+			<div className="form-control l m" style={{ color: '#2ecc71' }}>
+				<label>Mute Shortcut</label>
+				<input spellCheck={false} type="text" value={settings.muteShortcut} readOnly onKeyDown={(ev) => setShortcut(ev, 'muteShortcut')} />
+			</div>
+
+
+			{/* Deafen Shortcut */}
 			<div className="form-control l m" style={{ color: '#2ecc71' }}>
 				<label>Deafen Shortcut</label>
 				<input spellCheck={false} type="text" value={settings.deafenShortcut} readOnly onKeyDown={(ev) => setShortcut(ev, 'deafenShortcut')} />
 			</div>
+
+
+      {/* Voice Server */}
 			<div className="form-control l m" style={{ color: '#3498db' }}>
 				<label>Voice Server</label>
 				<URLInput initialURL={settings.serverURL} onValidURL={(url: string) => {
@@ -295,6 +328,9 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 					});
 				}} />
 			</div>
+
+
+      {/* Hide Lobby Code */}
 			<div className="form-control m" style={{ color: '#9b59b6' }} onClick={() => setSettings({
 				type: 'setOne',
 				action: ['hideCode', !settings.hideCode]
@@ -302,6 +338,9 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 				<input type="checkbox" checked={!settings.hideCode} style={{ color: '#9b59b6' }} readOnly />
 				<label>Show Lobby Code</label>
 			</div>
+
+
+      {/* 3D Spatial Audio */}
 			<div className="form-control m" style={{ color: '#fd79a8' }} onClick={() => setSettings({
 				type: 'setOne',
 				action: ['enableSpatialAudio', !settings.enableSpatialAudio]
@@ -309,11 +348,15 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 				<input type="checkbox" checked={settings.enableSpatialAudio} style={{ color: '#fd79a8' }} readOnly />
 				<label>Enable Spatial Audio</label>
 			</div>
+
+
+      {/* Save / Apply Hint Message */}
 			<div className='settings-alert' style={{ display: unsaved ? 'flex' : 'none' }}>
 				<span>
 					Exit to apply changes
 				</span>
 			</div>
+
 		</div>
 	</div>;
 };

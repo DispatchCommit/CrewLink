@@ -29,7 +29,7 @@ const Menu: React.FC<MenuProps> = function ({ errored }: MenuProps) {
 					:
 					<>
 						<span className="waiting">Waiting for Among Us</span>
-						<Spinner frontColor="#9b59b6" backColor="#2C2F33" size={80} loading />
+						<Spinner frontColor="#ff9800" backColor="#2C2F33" size={80} loading />
 						<button className="button" onClick={() => {
 							ipcRenderer.send('openGame');
 						}}>Open Game</button>
