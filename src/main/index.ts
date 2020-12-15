@@ -73,8 +73,13 @@ const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
 	app.quit();
 } else {
-	autoUpdater.checkForUpdatesAndNotify();
-	app.on('second-instance', () => {
+	// app.disableHardwareAcceleration();
+
+	// Check for update
+  autoUpdater.checkForUpdatesAndNotify();
+
+  // Focus application when attempting to re-open
+	app.on('second-instance', (event, commandLine, workingDirectory) => {
 		// Someone tried to run a second instance, we should focus our window.
 		if (mainWindow) {
 			if (mainWindow.isMinimized()) mainWindow.restore();
@@ -82,6 +87,66 @@ if (!gotTheLock) {
 		}
 	});
 
+
+	function createMainWindow() {
+		const window = new BrowserWindow({
+			width: 250,
+			height: 400,
+			resizable: false,
+			frame: false,
+			fullscreenable: false,
+			maximizable: false,
+			transparent: true,
+			webPreferences: {
+				nodeIntegration: true,
+				enableRemoteModule: true,
+				webSecurity: false
+			}
+		});
+
+		// open devtools on launch
+		if (isDevelopment) {
+			window.webContents.openDevTools()
+		}
+
+		if (isDevelopment) {
+			window.loadURL(`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}?version=${autoUpdater.currentVersion.version}`)
+		}
+		else {
+			window.loadURL(formatUrl({
+				pathname: path.join(__dirname, 'index.html'),
+				protocol: 'file',
+				query: {
+					version: autoUpdater.currentVersion.version
+				},
+				slashes: true
+			}))
+		}
+
+		window.on('closed', () => {
+			mainWindow = null
+		})
+
+		window.webContents.on('devtools-opened', () => {
+			window.focus()
+			setImmediate(() => {
+				window.focus()
+			})
+		})
+
+
+	async function injectExtensions () {
+    console.log( `Attempting to injecti extensions...` );
+
+    // add react devtools
+    const installExtension = await import( 'electron-devtools-installer' );
+    try {
+      const name = await installExtension.default( installExtension.REACT_DEVELOPER_TOOLS );
+      console.log( `Added Extension:  ${name}` );
+    } catch ( error ) {
+      console.error( 'An error occurred installing extension(s): ', error );
+    }
+  }
 
 	// quit application when all windows are closed
 	app.on('window-all-closed', () => {
@@ -99,7 +164,30 @@ if (!gotTheLock) {
 	});
 
 	// create main BrowserWindow when electron is ready
-	app.on('ready', () => {
-		mainWindow = createMainWindow();
+	app.on('ready', async () => {
+
+    mainWindow = createMainWindow();
+
+    if (isDevelopment) {
+      await injectExtensions();
+    }
+	});
+
+	// ipcMain.on('alwaysOnTop', (event, onTop: boolean) => {
+	// 	if (mainWindow) {
+	// 		mainWindow.setAlwaysOnTop(onTop, 'floating', 1);
+	// 		mainWindow.setVisibleOnAllWorkspaces(true);
+	// 		mainWindow.setFullScreenable(false);
+	// 	}
+	// });
+
+	ipcMain.on('shortcut', (event, val) => {
+		event.returnValue = false;
+		// console.log('register', val);
+		// globalShortcut.unregisterAll();
+		// event.returnValue = globalShortcut.register(val!, () => {
+		// 	console.log("push-to-talk");
+		// })
+
 	});
 }

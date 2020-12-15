@@ -26,9 +26,10 @@ function App() {
 		microphone: 'Default',
 		speaker: 'Default',
 		pushToTalk: false,
-		serverURL: 'https://crewl.ink',
+		serverURL: 'https://public2.crewl.ink', // '45.32.220.8:9736', // '54.193.94.35:9736',
 		pushToTalkShortcut: 'V',
 		deafenShortcut: 'RControl',
+		muteShortcut: 'RAlt',
 		offsets: {
 			version: '',
 			data: ''
@@ -74,11 +75,12 @@ function App() {
 		page = <Voice />;
 		break;
 	}
+
 	return (
 		<GameStateContext.Provider value={gameState}>
 			<SettingsContext.Provider value={settings}>
 				<div className="titlebar">
-					<span className="title">CrewLink{appVersion}</span>
+					<span className="title">DisaptchLink{appVersion}</span>
 					<svg className="titlebar-button settings" onClick={() => setSettingsOpen(!settingsOpen)} enableBackground="new 0 0 24 24" viewBox="0 0 24 24" fill="#868686" width="20px" height="20px">
 						<g>
 							<path d="M0,0h24v24H0V0z" fill="none" />

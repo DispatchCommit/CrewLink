@@ -76,6 +76,10 @@ const store = new Store<ISettings>({
 			type: 'string',
 			default: 'RControl'
 		},
+		muteShortcut: {
+			type: 'string',
+			default: 'RAlt'
+		},
 		offsets: {
 			type: 'object',
 			properties: {
@@ -179,11 +183,22 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 				.map(d => {
 					let label = d.label;
 					if (d.deviceId === 'default') {
-						label = 'Default';
+						label = "Default Device";
+
+            let match = /\((.+?)\)/.exec(d.label);
+            if (match && match[1])
+              label = `${label} - ${match[1]}`;
+					}
+					else if (d.deviceId === 'communications') {
+						label = "Default Communication";
+
+            let match = /\((.+?)\)/.exec(d.label);
+            if (match && match[1])
+              label = `${label} - ${match[1]}`;
 					} else {
-						const match = /(.+?)\)/.exec(d.label);
-						if (match && match[1])
-							label = match[1] + ')';
+						// let match = /\((.+?)\)/.exec(d.label);
+						// if (match && match[1])
+							// label = match[1];
 					}
 					return {
 						id: d.deviceId,
@@ -230,6 +245,7 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 		</svg>
 		<div className="settings-scroll">
 
+      {/* Choose Input Mic Dropdown */}
 			<div className="form-control m l" style={{ color: '#e74c3c' }}>
 				<label>Microphone</label>
 				<select value={settings.microphone} onChange={(ev) => {
@@ -246,6 +262,11 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 				</select>
 				{open && <MicrophoneSoundBar microphone={settings.microphone} />}
 			</div>
+
+      {/* Microphone UV Meter */}
+			<MicrophoneSoundBar/>
+
+			{/* Choose Output Speaker Dropdown */}
 			<div className="form-control m l" style={{ color: '#e67e22' }}>
 				<label>Speaker</label>
 				<select value={settings.speaker} onChange={(ev) => {
@@ -263,25 +284,37 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 				{open && <TestSpeakersButton speaker={settings.speaker} />}
 			</div>
 
-			<div className="form-control" style={{ color: '#f1c40f' }} onClick={() => setSettings({
-				type: 'setOne',
-				action: ['pushToTalk', false]
-			})}>
-				<input type="checkbox" checked={!settings.pushToTalk} style={{ color: '#f1c40f' }} readOnly />
-				<label>Voice Activity</label>
-			</div>
-			<div className={`form-control${settings.pushToTalk ? '' : ' m'}`} style={{ color: '#f1c40f' }} onClick={() => setSettings({
-				type: 'setOne',
-				action: ['pushToTalk', true]
-			})}>
-				<input type="checkbox" checked={settings.pushToTalk} readOnly />
-				<label>Push to Talk</label>
-			</div>
-			{settings.pushToTalk &&
-				<div className="form-control m" style={{ color: '#f1c40f' }}>
-					<input spellCheck={false} type="text" value={settings.pushToTalkShortcut} readOnly onKeyDown={(ev) => setShortcut(ev, 'pushToTalkShortcut')} />
-				</div>
-			}
+      {/* Test Speaker Button */}
+			<TestSpeakersButton/>
+
+			{/* Voice Activity / Push to Talk Setting */}
+			<div>
+        <div className="form-control" style={{ color: '#f1c40f' }} onClick={() => setSettings({
+          type: 'setOne',
+          action: ['pushToTalk', false]
+        })}>
+          <input type="radio" checked={!settings.pushToTalk} style={{ color: '#f1c40f' }} readOnly />
+          <label>Voice Activity</label>
+        </div>
+        <div className={`form-control${settings.pushToTalk ? '' : ' m'}`} style={{ color: '#f1c40f' }} onClick={() => setSettings({
+          type: 'setOne',
+          action: ['pushToTalk', true]
+        })}>
+          <input type="radio" checked={settings.pushToTalk} readOnly />
+          <label>Push to Talk</label>
+        </div>
+        {settings.pushToTalk &&
+        <div className="form-control m" style={{ color: '#f1c40f' }}>
+          <input spellCheck={false} type="text" value={settings.pushToTalkShortcut} readOnly onKeyDown={(ev) => setShortcut(ev, 'pushToTalkShortcut')} />
+        </div>
+        }
+        {!settings.pushToTalk && <div className="form-control l m" style={{ color: '#2ecc71' }}>
+          <label>Mute Shortcut</label>
+          <input spellCheck={false} type="text" value={settings.muteShortcut} readOnly onKeyDown={(ev) => setShortcut(ev, 'muteShortcut')} />
+        </div>
+        }
+      </div>
+
 			<div className="form-control l m" style={{ color: '#2ecc71' }}>
 				<label>Deafen Shortcut</label>
 				<input spellCheck={false} type="text" value={settings.deafenShortcut} readOnly onKeyDown={(ev) => setShortcut(ev, 'deafenShortcut')} />
@@ -306,10 +339,10 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 				type: 'setOne',
 				action: ['enableSpatialAudio', !settings.enableSpatialAudio]
 			})}>
-				<input type="checkbox" checked={settings.enableSpatialAudio} style={{ color: '#fd79a8' }} readOnly />
-				<label>Enable Spatial Audio</label>
+				<input type="checkbox" checked={settings.stereoInLobby} style={{ color: '#fd79a8' }} readOnly />
+				<label>Use 3D Audio</label>
 			</div>
-			<div className='settings-alert' style={{ display: unsaved ? 'flex' : 'none' }}>
+      <div className='settings-alert' style={{ display: unsaved ? 'flex' : 'none' }}>
 				<span>
 					Exit to apply changes
 				</span>

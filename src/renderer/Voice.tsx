@@ -33,6 +33,7 @@ interface ConnectionStuff {
 	stream?: MediaStream;
 	pushToTalk: boolean;
 	deafened: boolean;
+	muted: boolean;
 }
 
 interface OtherTalking {
@@ -43,46 +44,93 @@ interface OtherDead {
 	[playerId: number]: boolean; // isTalking
 }
 
+const MAX_DISTANCE: number = 1.25;
+
+// function clamp(number: number, min: number, max: number): number {
+// 	if (min > max) {
+// 		let tmp = max;
+// 		max = min;
+// 		min = tmp;
+// 	}
+// 	return Math.max(min, Math.min(number, max));
+// }
+
+// function mapNumber(n: number, oldLow: number, oldHigh: number, newLow: number, newHigh: number): number {
+// 	return clamp((n - oldLow) / (oldHigh - oldLow) * (newHigh - newLow) + newLow, newLow, newHigh);
+// }
+
+function calculatePlayerDistance ( me: Player, other: Player ): number {
+  return Math.sqrt( Math.pow( me.x - other.x, 2 ) + Math.pow( me.y - other.y, 2 ) );
+}
+
 function calculateVoiceAudio(state: AmongUsState, settings: ISettings, me: Player, other: Player, gain: GainNode, pan: PannerNode): void {
 	const audioContext = pan.context;
 	pan.positionZ.setValueAtTime(-0.5, audioContext.currentTime);
+
 	let panPos = [
 		(other.x - me.x),
 		(other.y - me.y)
 	];
-	if (state.gameState === GameState.DISCUSSION || (state.gameState === GameState.LOBBY && !settings.enableSpatialAudio)) {
-		panPos = [0, 0];
+
+	if (state.gameState === GameState.DISCUSSION || (state.gameState === GameState.LOBBY && !settings.stereoInLobby)) {
+		panPos = [ 0, 0 ];
 	}
+
 	if (isNaN(panPos[0])) panPos[0] = 999;
 	if (isNaN(panPos[1])) panPos[1] = 999;
+
 	panPos[0] = Math.min(999, Math.max(-999, panPos[0]));
 	panPos[1] = Math.min(999, Math.max(-999, panPos[1]));
+
 	if (other.inVent) {
 		gain.gain.value = 0;
 		return;
 	}
+
+  // Increase hearing range for ghosts
+  if ( me.isDead ) {
+    pan.maxDistance = MAX_DISTANCE * 4;
+  }
+
 	if (me.isDead && other.isDead) {
 		gain.gain.value = 1;
-		pan.positionX.setValueAtTime(panPos[0], audioContext.currentTime);
-		pan.positionY.setValueAtTime(panPos[1], audioContext.currentTime);
+		pan.positionX.setValueAtTime( panPos[0], audioContext.currentTime );
+		pan.positionY.setValueAtTime( panPos[1], audioContext.currentTime );
 		return;
 	}
+
 	if (!me.isDead && other.isDead) {
 		gain.gain.value = 0;
 		return;
 	}
+
 	if (state.gameState === GameState.LOBBY || state.gameState === GameState.DISCUSSION) {
 		gain.gain.value = 1;
-		pan.positionX.setValueAtTime(panPos[0], audioContext.currentTime);
-		pan.positionY.setValueAtTime(panPos[1], audioContext.currentTime);
-	} else if (state.gameState === GameState.TASKS) {
-		gain.gain.value = 1;
-		pan.positionX.setValueAtTime(panPos[0], audioContext.currentTime);
-		pan.positionY.setValueAtTime(panPos[1], audioContext.currentTime);
+		pan.positionX.setValueAtTime( panPos[0], audioContext.currentTime );
+		pan.positionY.setValueAtTime( panPos[1], audioContext.currentTime );
+	} else if ( state.gameState === GameState.TASKS ) {
+		// const distance = Math.sqrt(Math.pow(me.x - other.x, 2) + Math.pow(me.y - other.y, 2));
+		// gain.gain.value = mapNumber(distance, 0, 2.66, 1, 0);
+
+    if ( settings.stereoInLobby ) {
+      gain.gain.value = 1;
+      pan.positionX.setValueAtTime( panPos[0], audioContext.currentTime );
+      pan.positionY.setValueAtTime( panPos[1], audioContext.currentTime );
+      pan.positionZ.setValueAtTime( 0, audioContext.currentTime );
+
+      console.log( `Position: ${panPos[0].toFixed(2)}, ${panPos[1].toFixed(2)}` );
+    } else {
+      gain.gain.value = 1;
+      pan.positionX.setValueAtTime( 0, audioContext.currentTime );
+      pan.positionY.setValueAtTime( 0, audioContext.currentTime );
+      pan.positionZ.setValueAtTime( calculatePlayerDistance( me, other ), audioContext.currentTime );
+
+      console.log( `Distance: ${calculatePlayerDistance( me, other ).toFixed(2)}` );
+    }
 	} else {
 		gain.gain.value = 0;
 	}
-	if (gain.gain.value === 1 && Math.sqrt(Math.pow(panPos[0], 2) + Math.pow(panPos[1], 2)) > 7) {
+	if ( gain.gain.value === 1 && calculatePlayerDistance( me, other ) > 7 ) {
 		gain.gain.value = 0;
 	}
 }
@@ -102,6 +150,7 @@ const Voice: React.FC = function () {
 	const audioElements = useRef<AudioElements>({});
 
 	const [deafenedState, setDeafened] = useState(false);
+	const [mutedState, setMuted] = useState(false);
 	const [connected, setConnected] = useState(false);
 
 	// Handle pushToTalk, if set
@@ -134,6 +183,7 @@ const Voice: React.FC = function () {
 	const connectionStuff = useRef<Partial<ConnectionStuff>>({
 		pushToTalk: settings.pushToTalk,
 		deafened: false,
+    muted: false
 	});
 
 	// BIG ASS BLOB - Handle audio
@@ -182,10 +232,15 @@ const Voice: React.FC = function () {
 
 			ipcRenderer.on('toggleDeafen', () => {
 				connectionStuff.current.deafened = !connectionStuff.current.deafened;
-				stream.getAudioTracks()[0].enabled = !connectionStuff.current.deafened;
+				stream.getAudioTracks()[0].enabled = !connectionStuff.current.deafened && !connectionStuff.current.muted;
 				setDeafened(connectionStuff.current.deafened);
 			});
-			ipcRenderer.on('pushToTalk', (_: unknown, pressing: boolean) => {
+			ipcRenderer.on('toggleMute', () => {
+				connectionStuff.current.muted = !connectionStuff.current.muted;
+				stream.getAudioTracks()[0].enabled = !connectionStuff.current.muted && !connectionStuff.current.deafened;
+				setMuted(connectionStuff.current.muted);
+			});
+			ipcRenderer.on('pushToTalk', (_: any, pressing: boolean) => {
 				if (!connectionStuff.current.pushToTalk) return;
 				if (!connectionStuff.current.deafened) {
 					stream.getAudioTracks()[0].enabled = pressing;
@@ -253,12 +308,14 @@ const Voice: React.FC = function () {
 
 					const context = new AudioContext();
 					const source = context.createMediaStreamSource(stream);
-					const gain = context.createGain();
-					const pan = context.createPanner();
+					let gain = context.createGain();
+					let pan = context.createPanner();
+					// let compressor = context.createDynamicsCompressor();
 					pan.refDistance = 0.1;
 					pan.panningModel = 'equalpower';
 					pan.distanceModel = 'linear';
-					pan.maxDistance = 2.66 * 2;
+					// pan.maxDistance = 2.66 * 2;
+					pan.maxDistance = MAX_DISTANCE * 2;
 					pan.rolloffFactor = 1;
 
 					source.connect(pan);
@@ -378,7 +435,15 @@ const Voice: React.FC = function () {
 		<div className="root">
 			<div className="top">
 				{myPlayer &&
-					<Avatar deafened={deafenedState} player={myPlayer} borderColor={connected ? '#2ecc71' : '#c0392b'} talking={talking} isAlive={!myPlayer.isDead} size={100} />
+					<Avatar
+            deafened={deafenedState}
+            muted={mutedState}
+            player={myPlayer}
+            borderColor={connected ? '#2ecc71' : '#c0392b'}
+            talking={talking}
+            isAlive={!myPlayer.isDead}
+            size={100}
+          />
 					// <div className="avatar" style={{ borderColor: talking ? '#2ecc71' : 'transparent' }}>
 					// 	<Canvas src={alive} color={playerColors[myPlayer.colorId][0]} shadow={playerColors[myPlayer.colorId][1]} />
 					// </div>
@@ -402,11 +467,14 @@ const Voice: React.FC = function () {
 					otherPlayers.map(player => {
 						const connected = Object.values(socketPlayerIds).includes(player.id);
 						return (
-							<Avatar key={player.id} player={player}
+							<Avatar
+                key={player.id}
+                player={player}
 								talking={!connected || otherTalking[player.id]}
 								borderColor={connected ? '#2ecc71' : '#c0392b'}
 								isAlive={!otherDead[player.id]}
-								size={50} />
+								size={50}
+              />
 						);
 					})
 				}

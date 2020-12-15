@@ -1,20 +1,20 @@
 {
-  "name": "crewlink",
-  "version": "1.1.6",
+  "name": "dispatchlink",
+  "version": "1.1.12",
   "license": "GPL-3.0-or-later",
   "description": "Free, open, Among Us proximity voice chat",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ottomated/crewlink.git"
+    "url": "https://github.com/dispatchcommit/DispatchLink.git"
   },
   "funding": {
     "type": "individual",
-    "url": "https://paypal.me/ottomated"
+    "url": "http://paypal.me/bitwavetv"
   },
   "author": {
-    "name": "Ottomated",
-    "email": "otto@ottomated.net",
-    "url": "https://ottomated.net"
+    "name": "DispatchCommit",
+    "email": "dispatchcommit@gmail.com",
+    "url": "https://twitter.com/dispatchcommit"
   },
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
@@ -50,6 +50,7 @@
     "@babel/preset-react": "^7.12.1",
     "@types/color": "^3.0.1",
     "@types/cross-spawn": "^6.0.2",
+    "@types/electron-devtools-installer": "^2.2.0",
     "@types/js-yaml": "^3.12.5",
     "@types/node": "12",
     "@types/react": "^16.9.53",
@@ -61,6 +62,7 @@
     "@typescript-eslint/parser": "^4.9.1",
     "electron": "9.3.3",
     "electron-builder": "^22.9.1",
+    "electron-devtools-installer": "^3.1.1",
     "electron-webpack": "^2.8.2",
     "electron-webpack-ts": "^4.0.1",
     "eslint": "^7.15.0",
