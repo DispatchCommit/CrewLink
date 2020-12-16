@@ -1,54 +1,70 @@
 import React, { useEffect, useState } from 'react';
 
 interface TestMicProps {
-	microphone: string
+	microphone: string;
 }
 
 const TestMicrophoneButton: React.FC<TestMicProps> = function ({ microphone } : TestMicProps) {
 	const [error, setError] = useState<boolean>(false);
 	const [rms, setRms] = useState<number>(0);
 
-	useEffect(() => {
-		setError(false);
+  // Local state
+  const minUpdateRate = 50;
+  let lastRefreshTime = 0;
+  let lastRms = 0;
 
-		const ctx = new AudioContext();
-		const processor = ctx.createScriptProcessor(2048, 1, 1);
-		processor.connect(ctx.destination);
+  const handleProcess = (event: AudioProcessingEvent) => {
+    // limit update frequency
+    if ( event.timeStamp - lastRefreshTime < minUpdateRate ) {
+      return;
+    }
 
-		const minUpdateRate = 50;
-		let lastRefreshTime = 0;
+    // update last refresh time
+    lastRefreshTime = event.timeStamp;
 
-		const handleProcess = (event: AudioProcessingEvent) => {
-			// limit update frequency
-			if (event.timeStamp - lastRefreshTime < minUpdateRate) {
-				return;
-			}
+    const input = event.inputBuffer.getChannelData(0);
+    const total = input.reduce((acc, val) => acc + Math.abs(val), 0);
+    const rms = Math.sqrt(total / input.length);
+    if ( rms > lastRms ) {
+      lastRms = rms;
+      setRms(rms);
+    } else {
+      lastRms -= .02;
+      setRms(lastRms);
+    }
+  }
 
-			// update last refresh time
-			lastRefreshTime = event.timeStamp;
+  useEffect(() => {
+    setError(false)
 
-			const input = event.inputBuffer.getChannelData(0);
-			const total = input.reduce((acc, val) => acc + Math.abs(val), 0);
-			const rms = Math.min(50, Math.sqrt(total / input.length));
-			setRms(rms);
-		};
+    const ctx = new AudioContext()
+    const processor = ctx.createScriptProcessor(2048, 1, 1)
+    processor.connect(ctx.destination)
 
-		navigator.mediaDevices.getUserMedia({ audio: { deviceId: microphone ?? 'default' } })
-			.then((stream) => {
-				const src = ctx.createMediaStreamSource(stream);
-				src.connect(processor);
-				processor.addEventListener('audioprocess', handleProcess);
-			})
-			.catch(() => setError(true));
+    let removed = false;
 
-		return () => {
-			processor.removeEventListener('audioprocess', handleProcess);
-		};
-	}, [microphone]);
+    navigator.mediaDevices.getUserMedia({ audio: { deviceId: microphone ?? 'default' } })
+      .then((stream) => {
+        if ( removed ) return;
+        const src = ctx.createMediaStreamSource(stream)
+        src.connect(processor)
+        processor.addEventListener('audioprocess', handleProcess)
+        console.log( `add event listener: ${microphone} ${stream.id}` )
+      })
+      .catch(() => setError(true))
 
-	if (error) return <p style={{ fontSize: 14, color: '#e74c3c' }}>Could not connect to microphone</p>;
+    return () => {
+      removed = true;
+      processor.removeEventListener('audioprocess', handleProcess)
+      console.log( `remove event listener: ${microphone}` )
+    }
+  }, [microphone]);
 
-	return <div className="microphone-bar"><div className="microphone-bar-inner" style={{ width: `${rms * 2 * 100}%` }}></div></div>;
+  if (error) return <p style={{ fontSize: 12, color: 'red' }}>Could not connect to microphone</p>
+
+  return <div className="microphone-bar">
+    <div className="microphone-bar-inner" style={{ clipPath: `inset(0 ${Math.floor(( 1 - rms * 2 ) * 100)}% 0 0)` }} />
+  </div>;
 };
 
 export default TestMicrophoneButton;

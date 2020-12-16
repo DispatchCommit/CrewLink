@@ -10,6 +10,8 @@ export interface IOffsets {
 	playerAddrPtr: number;
 	exiledPlayerId: number[];
 	gameCode: number[];
+	hostId: number[];
+	clientId: number[];
 	player: {
 		isLocal: number[];
 		localX: number[];

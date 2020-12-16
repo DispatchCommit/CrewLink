@@ -1,12 +1,13 @@
 import Store from 'electron-store';
 import React, { useContext, useEffect, useReducer, useState } from 'react';
-import { SettingsContext } from './contexts';
+import { SettingsContext, LobbySettingsContext, GameStateContext } from './contexts';
 import Ajv from 'ajv';
 import './css/settings.css';
 import MicrophoneSoundBar from './MicrophoneSoundBar';
 import TestSpeakersButton from './TestSpeakersButton';
-import { ISettings } from '../common/ISettings';
+import { ISettings, ILobbySettings } from '../common/ISettings';
 import { remote } from 'electron';
+import { GameState } from '../common/AmongUsState';
 
 const keys = new Set(['Space', 'Backspace', 'Delete', 'Enter', 'Up', 'Down', 'Left', 'Right', 'Home', 'End', 'PageUp', 'PageDown', 'Escape', 'LControl', 'LShift', 'LAlt', 'RControl', 'RShift', 'RAlt']);
 
@@ -37,7 +38,7 @@ const store = new Store<ISettings>({
 		'1.1.5': store => {
 			const serverURL = store.get('serverURL');
 			if (serverURL === 'http://54.193.94.35:9736') {
-				store.set('serverURL', 'https://crewl.ink');
+				store.set('serverURL', 'https://public2.crewl.ink');
 			}
 		},
 		'1.1.6': store => {
@@ -47,6 +48,10 @@ const store = new Store<ISettings>({
 			}
 			// @ts-ignore
 			store.delete('stereoInLobby');
+		},
+		'1.1.7': store => {
+			// @ts-ignore
+			store.delete('offsets');
 		}
 	},
 	schema: {
@@ -68,12 +73,16 @@ const store = new Store<ISettings>({
 		},
 		serverURL: {
 			type: 'string',
-			default: 'https://crewl.ink',
+			default: 'https://public2.crewl.ink',
 			format: 'uri'
 		},
 		pushToTalkShortcut: {
 			type: 'string',
 			default: 'V'
+		},
+		muteShortcut: {
+			type: 'string',
+			default: 'RAlt'
 		},
 		deafenShortcut: {
 			type: 'string',
@@ -108,12 +117,18 @@ const store = new Store<ISettings>({
 			type: 'string',
 			default: 'top'
 		},
+		localLobbySettings: {
+			type: 'object',
+			default: {
+				maxDistance: 5.32
+			}
+		}
 	}
 });
 
 store.onDidChange('serverURL', (newUrl) => {
 	if (newUrl === 'http://54.193.94.35:9736') {
-		store.set('serverURL', 'https://crewl.ink');
+		store.set('serverURL', 'https://public2.crewl.ink');
 	}
 });
 
@@ -123,16 +138,35 @@ export interface SettingsProps {
 }
 
 export const settingsReducer = (state: ISettings, action: {
-	type: 'set' | 'setOne', action: [string, unknown] | ISettings
+	type: 'set' | 'setOne' | 'setLobbySetting', action: [string, unknown] | ISettings
 }): ISettings => {
 	if (action.type === 'set') return action.action as ISettings;
 	const v = (action.action as [string, unknown]);
+	if (action.type === 'setLobbySetting') {
+		let settings = {
+			...state.localLobbySettings,
+			[v[0]]: v[1]
+		};
+		v[0] = 'localLobbySettings';
+		v[1] = settings;
+	}
 	store.set(v[0], v[1]);
 	return {
 		...state,
 		[v[0]]: v[1]
 	};
 };
+
+export const lobbySettingsReducer = (state: ILobbySettings, action: {
+	type: 'set' | 'setOne', action: [string, any] | ILobbySettings
+}): ILobbySettings => {
+	if (action.type === 'set') return action.action as ILobbySettings;
+	let v = (action.action as [string, any]);
+	return {
+		...state,
+		[v[0]]: v[1]
+	};
+}
 
 interface MediaDevice {
 	id: string;
@@ -154,11 +188,11 @@ function URLInput({ initialURL, onValidURL }: URLInputProps) {
 	}, [initialURL]);
 
 	function onChange(event: React.ChangeEvent<HTMLInputElement>) {
-		setCurrentURL(event.target.value);
+    const eventValue = event.target.value.trim();
 
-		if (validateURL(event.target.value)) {
+		if (validateURL(eventValue)) {
 			setURLValid(true);
-			onValidURL(event.target.value);
+			onValidURL(eventValue);
 		} else {
 			setURLValid(false);
 		}
@@ -169,6 +203,8 @@ function URLInput({ initialURL, onValidURL }: URLInputProps) {
 
 const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsProps) {
 	const [settings, setSettings] = useContext(SettingsContext);
+	const gameState = useContext(GameStateContext);
+	const [lobbySettings] = useContext(LobbySettingsContext);
 	const [unsavedCount, setUnsavedCount] = useState(0);
 	const unsaved = unsavedCount > 2;
 	useEffect(() => {
@@ -234,6 +270,10 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 
 	return <div id="settings" style={{ transform: open ? 'translateX(0)' : 'translateX(-100%)' }}>
 		<svg className="titlebar-button back" viewBox="0 0 24 24" fill="#868686" width="20px" height="20px" onClick={() => {
+			setSettings({
+				type: 'setOne',
+				action: ['localLobbySettings', lobbySettings]
+			});
 			if (unsaved) {
 				onClose();
 				location.reload();
@@ -244,8 +284,13 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 			<path d="M0 0h24v24H0z" fill="none" />
 			<path d="M11.67 3.87L9.9 2.1 0 12l9.9 9.9 1.77-1.77L3.54 12z" />
 		</svg>
+
+
+    {/* Settings Menu */}
 		<div className="settings-scroll">
 
+
+      {/* Mic Settings */}
 			<div className="form-control m l" style={{ color: '#e74c3c' }}>
 				<label>Microphone</label>
 				<select value={settings.microphone} onChange={(ev) => {
@@ -260,8 +305,13 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 						))
 					}
 				</select>
+
+        {/* UV Meter */}
 				{open && <MicrophoneSoundBar microphone={settings.microphone} />}
 			</div>
+
+
+      {/* Speaker Settings */}
 			<div className="form-control m l" style={{ color: '#e67e22' }}>
 				<label>Speaker</label>
 				<select value={settings.speaker} onChange={(ev) => {
@@ -276,32 +326,51 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 						))
 					}
 				</select>
+
+        {/* Test Speakers Button */}
 				{open && <TestSpeakersButton speaker={settings.speaker} />}
 			</div>
 
+
+      {/* Voice Activity vs. Push To Talk */}
 			<div className="form-control" style={{ color: '#f1c40f' }} onClick={() => setSettings({
 				type: 'setOne',
 				action: ['pushToTalk', false]
 			})}>
-				<input type="checkbox" checked={!settings.pushToTalk} style={{ color: '#f1c40f' }} readOnly />
+				<input type="radio" checked={!settings.pushToTalk} style={{ color: '#f1c40f' }} readOnly />
 				<label>Voice Activity</label>
 			</div>
 			<div className={`form-control${settings.pushToTalk ? '' : ' m'}`} style={{ color: '#f1c40f' }} onClick={() => setSettings({
 				type: 'setOne',
 				action: ['pushToTalk', true]
 			})}>
-				<input type="checkbox" checked={settings.pushToTalk} readOnly />
+				<input type="radio" checked={settings.pushToTalk} readOnly />
 				<label>Push to Talk</label>
 			</div>
+
+      {/* Push To Talk Key */}
 			{settings.pushToTalk &&
 				<div className="form-control m" style={{ color: '#f1c40f' }}>
 					<input spellCheck={false} type="text" value={settings.pushToTalkShortcut} readOnly onKeyDown={(ev) => setShortcut(ev, 'pushToTalkShortcut')} />
 				</div>
 			}
+
+
+			{/* Mute Shortcut */}
+			<div className="form-control l m" style={{ color: '#2ecc71' }}>
+				<label>Mute Shortcut</label>
+				<input spellCheck={false} type="text" value={settings.muteShortcut} readOnly onKeyDown={(ev) => setShortcut(ev, 'muteShortcut')} />
+			</div>
+
+
+			{/* Deafen Shortcut */}
 			<div className="form-control l m" style={{ color: '#2ecc71' }}>
 				<label>Deafen Shortcut</label>
 				<input spellCheck={false} type="text" value={settings.deafenShortcut} readOnly onKeyDown={(ev) => setShortcut(ev, 'deafenShortcut')} />
 			</div>
+
+
+      {/* Voice Server */}
 			<div className="form-control l m" style={{ color: '#3498db' }}>
 				<label>Voice Server</label>
 				<URLInput initialURL={settings.serverURL} onValidURL={(url: string) => {
@@ -311,6 +380,9 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 					});
 				}} />
 			</div>
+
+
+      {/* Hide Lobby Code */}
 			<div className="form-control m" style={{ color: '#9b59b6' }} onClick={() => setSettings({
 				type: 'setOne',
 				action: ['hideCode', !settings.hideCode]
@@ -318,13 +390,17 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 				<input type="checkbox" checked={!settings.hideCode} style={{ color: '#9b59b6' }} readOnly />
 				<label>Show Lobby Code</label>
 			</div>
-			<div className="form-control m" style={{ color: '#fd79a8' }} onClick={() => setSettings({
+			
+			{/* 3D Spatial Audio */}
+			<div className={gameState.gameState === GameState.MENU || gameState.gameState === undefined ? "form-control m" : "form-control"} style={{ color: '#fd79a8' }} onClick={() => setSettings({
 				type: 'setOne',
 				action: ['enableSpatialAudio', !settings.enableSpatialAudio]
 			})}>
 				<input type="checkbox" checked={settings.enableSpatialAudio} style={{ color: '#fd79a8' }} readOnly />
 				<label>Enable Spatial Audio</label>
 			</div>
+      
+      
 			<div className="form-control l" style={{ color: '#f72f5e' }}>
 				<label>Overlay Position</label>
 				<select onChange={(ev) => {
@@ -344,6 +420,28 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 				<input type="checkbox" checked={settings.compactOverlay} style={{ color: '#f72f5e' }} readOnly />
 				<label>Compact Overlay</label>
 			</div>
+
+			{/* Game State Settings */}
+			{gameState.gameState !== undefined && gameState.gameState !== GameState.MENU &&
+				<h2 style={{ color: '#e74c3c' }}>Lobby settings</h2>
+			}
+			{gameState.gameState !== undefined && gameState.gameState !== GameState.MENU && gameState.isHost === true ? (
+				<div className="form-control l m" style={{ color: '#3498db' }}>
+					<label>Max Distance</label>
+					<input spellCheck={false} type="range" min="1" max="10" step="0.1" onChange={(ev) => setSettings({
+						type: 'setLobbySetting',
+						action: ['maxDistance', parseFloat(ev.target.value)]
+					})} value={settings.localLobbySettings.maxDistance} />
+					<span>{settings.localLobbySettings.maxDistance}</span>
+				</div>
+			) : gameState.gameState !== undefined && gameState.gameState !== GameState.MENU && (
+				<div className="form-control l m" style={{ color: '#3498db' }}>
+					<label>Max Distance: {lobbySettings.maxDistance}</label>
+				</div>
+			)}
+
+
+			{/* Save / Apply Hint Message */}
 			<div className='settings-alert' style={{ display: unsaved ? 'flex' : 'none' }}>
 				<span>
 					Exit to apply changes

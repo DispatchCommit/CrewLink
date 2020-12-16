@@ -6,6 +6,7 @@ export interface ISettings {
 	pushToTalk: boolean;
 	serverURL: string;
 	pushToTalkShortcut: string;
+	muteShortcut: string;
 	deafenShortcut: string;
 	offsets: {
 		version: string;
@@ -15,4 +16,11 @@ export interface ISettings {
 	enableSpatialAudio: boolean;
 	compactOverlay: boolean;
 	overlayPosition: string;
+	localLobbySettings: {
+		maxDistance: number;
+	}
+}
+
+export interface ILobbySettings {
+	maxDistance: number;
 }

@@ -8,15 +8,21 @@ interface TestSpeakersProps {
 }
 
 const TestSpeakersButton: React.FC<TestSpeakersProps> = ({ speaker }: TestSpeakersProps) => {
-	const testSpeakers = () => {
-		const audio = new Audio() as ExtendedAudioElement;
-		audio.src = chime;
+  const audio = new Audio() as ExtendedAudioElement;
+  audio.src = chime;
+  audio.volume = 0.5;
 
-		if (speaker.toLowerCase() !== 'default')
-			audio.setSinkId(speaker);
+  const testSpeakers = () => {
+    if (speaker.toLowerCase() !== 'default')
+      audio.setSinkId(speaker);
 
-		audio.play();
-	};
+    audio.currentTime = 0;
+
+    if ( !audio.paused )
+      audio.pause();
+    else
+      audio.play();
+  }
 
 	return (
 		<button className="test-speakers" onClick={testSpeakers}>Test Speaker</button>

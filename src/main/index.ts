@@ -30,6 +30,10 @@ function createMainWindow() {
 	const window = new BrowserWindow({
 		width: 250,
 		height: 350,
+		maxWidth: 250,
+		minWidth: 250,
+		maxHeight: 350,
+		minHeight: 350,
 		x: mainWindowState.x,
 		y: mainWindowState.y,
 
@@ -48,7 +52,9 @@ function createMainWindow() {
 	mainWindowState.manage(window);
 
 	if (isDevelopment) {
-		window.webContents.openDevTools();
+		window.webContents.openDevTools({
+      mode: 'detach',
+    });
 	}
 
 	if (isDevelopment) {
