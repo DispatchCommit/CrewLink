@@ -5,6 +5,7 @@ import { ipcRenderer, remote } from 'electron';
 import { AmongUsState } from '../common/AmongUsState';
 import Settings, { settingsReducer, lobbySettingsReducer } from './Settings';
 import { GameStateContext, SettingsContext, LobbySettingsContext } from './contexts';
+import ReactDOM from 'react-dom';
 
 let appVersion = '';
 if (typeof window !== 'undefined' && window.location) {
@@ -31,15 +32,15 @@ export default function App() {
 		muteShortcut: 'RAlt',
 		offsets: {
 			version: '',
-			data: ''
+			data: '',
 		},
 		hideCode: false,
 		enableSpatialAudio: true,
 		compactOverlay: false,
-		overlayPosition: 'top'
+		overlayPosition: 'top',
 		localLobbySettings: {
-			maxDistance: 5.32
-		}
+			maxDistance: 5.32,
+		},
 	});
 	const lobbySettings = useReducer(lobbySettingsReducer, {
 		maxDistance: 5.32
