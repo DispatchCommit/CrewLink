@@ -28,21 +28,21 @@ export default function Overlay() {
 			if (!gameState || !gameState.players) return undefined;
 			else return gameState.players.find(p => p.isLocal);
 		}, [gameState]);
-	
+
 	const relevantPlayers = useMemo(() => {
 		let relevantPlayers: Player[];
 		if (!gameState || !gameState.players || gameState.lobbyCode === 'MENU' || !myPlayer) relevantPlayers = [];
 		else relevantPlayers = gameState.players.filter(p => (
-				(Object.values(socketPlayerIds).includes(p.id) || p.isLocal) && 
+				(Object.values(socketPlayerIds).includes(p.id) || p.isLocal) &&
 				((!myPlayer.isDead && !otherDead[p.id]) || myPlayer.isDead)
 			));
 		return relevantPlayers;
 	}, [gameState]);
-	
+
 	let talkingPlayers: Player[];
 	if (!gameState || !gameState.players || gameState.lobbyCode === 'MENU' || !myPlayer) talkingPlayers = [];
 	else talkingPlayers = gameState.players.filter(p => (otherTalking[p.id] || (p.isLocal && talking)));
-	
+
 	useEffect(() => {
 		if (gameState.gameState === GameState.LOBBY) {
 			setOtherDead({});
@@ -56,42 +56,42 @@ export default function Overlay() {
 			});
 		}
 	}, [gameState.gameState]);
-	
-	useEffect(() => {		
+
+	useEffect(() => {
 		const onOverlaySettings = (_: Electron.IpcRendererEvent, newSettings: any) => {
 			setSettings(newSettings);
 		};
-		
+
 		const onOverlayState = (_: Electron.IpcRendererEvent, state: string) => {
 			setStatus(state);
 		};
-		
+
 		const onOverlayGameState = (_: Electron.IpcRendererEvent, newState: AmongUsState) => {
 			setGameState(newState);
 		};
-		
+
 		const onOverlaySocketIds = (_: Electron.IpcRendererEvent, ids: SocketIdMap) => {
 			setSocketPlayerIds(ids);
 		};
-		
-		
+
+
 		const onOverlayTalkingSelf = (_: Electron.IpcRendererEvent, talking: boolean) => {
 			setTalking(talking);
 		};
-		
+
 		const onOverlayTalking = (_: Electron.IpcRendererEvent, id: number) => {
 			setOtherTalking(old => ({
 				...old,
 				[id]: true
-			}));		
+			}));
 		};
-		
+
 		const onOverlayNotTalking = (_: Electron.IpcRendererEvent, id: number) => {
 			setOtherTalking(old => ({
 				...old,
 				[id]: false
 			}));
-			
+
 		};
 
 		ipcRenderer.on('overlaySettings', onOverlaySettings);
@@ -101,6 +101,7 @@ export default function Overlay() {
 		ipcRenderer.on('overlayTalkingSelf', onOverlayTalkingSelf);
 		ipcRenderer.on('overlayTalking', onOverlayTalking);
 		ipcRenderer.on('overlayNotTalking', onOverlayNotTalking);
+
 		return () => {
 			ipcRenderer.off('overlaySettings', onOverlaySettings);
 			ipcRenderer.off('overlayState', onOverlayState);
@@ -111,23 +112,23 @@ export default function Overlay() {
 			ipcRenderer.off('overlayNotTalking', onOverlayNotTalking);
 		}
 	}, []);
-		
+
 	document.body.style.backgroundColor = "rgba(255, 255, 255, 0)";
 	document.body.style.paddingTop = "0";
-	
-	var baseCSS:any = {
+
+	const baseCSS:any = {
 		backgroundColor: "rgba(0, 0, 0, 0.85)",
-		width: "100px",
+		width: "150px",
 		borderRadius: "8px",
 		position: "relative",
 		marginTop: "-16px",
 		paddingLeft: "8px",
 	};
-	var topArea = <p><b style={{color:"#9b59b6"}}>CrewLink</b> ({status})</p>
-	var playersCSS:any = {}
-	var playerList:Player[] = [];
+	let topArea = <div><div><b style={{color:"#ff9800"}}>DispatchLink</b></div><div><i style={{fontSize:".75rem", fontWeight:"lighter"}}>proximity mod</i></div><div>[{status}]</div></div>
+	const playersCSS:any = {}
+	let playerList:Player[] = [];
 	if (gameState.players && gameState.gameState != GameState.MENU) playerList = relevantPlayers;
-	
+
 	if (gameState.gameState == GameState.UNKNOWN || gameState.gameState == GameState.MENU) {
 		baseCSS["left"] = "8px";
 		baseCSS["top"] = "60px";
@@ -145,7 +146,7 @@ export default function Overlay() {
 			baseCSS["bottom"] = "0px";
 			baseCSS["backgroundColor"] = "rgba(0, 0, 0, 0.35)";
 			baseCSS["width"] = null;
-			
+
 			playersCSS["justifyContent"] = "left"
 			playersCSS["alignItems"] = "left"
 		}
@@ -156,7 +157,7 @@ export default function Overlay() {
 		}
 	}
 
-	var playerArea:JSX.Element = <></>;
+	let playerArea:JSX.Element = <></>;
 	if (playerList) {
 		playerArea = <div className="otherplayers" style={playersCSS}>
 					{
@@ -179,9 +180,9 @@ export default function Overlay() {
 					}
 					</div>
 	}
-		
-	
-	
+
+
+
 	return (
 	<div style={baseCSS}>
 		{topArea}
