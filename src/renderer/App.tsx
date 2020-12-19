@@ -26,7 +26,7 @@ export default function App() {
 		microphone: 'Default',
 		speaker: 'Default',
 		pushToTalk: false,
-		serverURL: 'https://public2.crewl.ink',
+		serverURL: 'http://138.68.12.47:9736',
 		pushToTalkShortcut: 'V',
 		deafenShortcut: 'RControl',
 		muteShortcut: 'RAlt',
@@ -45,7 +45,7 @@ export default function App() {
 	const lobbySettings = useReducer(lobbySettingsReducer, {
 		maxDistance: 5.32
 	});
-		
+
 
 	useEffect(() => {
 		const onOpen = (_: Electron.IpcRendererEvent, isOpen: boolean) => {
@@ -54,7 +54,7 @@ export default function App() {
 			if (overlay) {
 				overlay.webContents.send('overlayState', 'MENU');
 			}
-	
+
 		};
 		const onState = (_: Electron.IpcRendererEvent, newState: AmongUsState) => {
 			setGameState(newState);

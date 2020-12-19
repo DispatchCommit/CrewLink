@@ -49,7 +49,7 @@ async function loadOffsets(event: Electron.IpcMainEvent): Promise<IOffsets | und
 
 	let data: string;
 	const offsetStore = store.get('offsets') || {};
-	if (version === offsetStore.version) {
+	if (version === offsetStore.version && false) {
 		data = offsetStore.data;
 	} else {
 		try {
