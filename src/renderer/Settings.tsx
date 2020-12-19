@@ -38,7 +38,7 @@ const store = new Store<ISettings>({
 		'1.1.5': store => {
 			const serverURL = store.get('serverURL');
 			if (serverURL === 'http://54.193.94.35:9736') {
-				store.set('serverURL', 'https://public2.crewl.ink');
+				store.set('serverURL', 'http://138.68.12.47:9736');
 			}
 		},
 		'1.1.6': store => {
@@ -73,7 +73,7 @@ const store = new Store<ISettings>({
 		},
 		serverURL: {
 			type: 'string',
-			default: 'https://public2.crewl.ink',
+			default: 'http://138.68.12.47:9736',
 			format: 'uri'
 		},
 		pushToTalkShortcut: {
@@ -128,7 +128,10 @@ const store = new Store<ISettings>({
 
 store.onDidChange('serverURL', (newUrl) => {
 	if (newUrl === 'http://54.193.94.35:9736') {
-		store.set('serverURL', 'https://public2.crewl.ink');
+		store.set('serverURL', 'http://138.68.12.47:9736');
+	}
+	if (newUrl === 'https://public2.crewl.ink') {
+		store.set('serverURL', 'http://138.68.12.47:9736');
 	}
 });
 
@@ -213,7 +216,7 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 			action: store.store
 		});
 	}, []);
-	
+
 	const overlay = remote.getGlobal('overlay');
 	if (overlay) {
 		overlay.webContents.send('overlaySettings', settings);
@@ -390,7 +393,7 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 				<input type="checkbox" checked={!settings.hideCode} style={{ color: '#9b59b6' }} readOnly />
 				<label>Show Lobby Code</label>
 			</div>
-			
+
 			{/* 3D Spatial Audio */}
 			<div className={gameState.gameState === GameState.MENU || gameState.gameState === undefined ? "form-control m" : "form-control"} style={{ color: '#fd79a8' }} onClick={() => setSettings({
 				type: 'setOne',
@@ -399,8 +402,8 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 				<input type="checkbox" checked={settings.enableSpatialAudio} style={{ color: '#fd79a8' }} readOnly />
 				<label>Enable Spatial Audio</label>
 			</div>
-      
-      
+
+
 			<div className="form-control l" style={{ color: '#f72f5e' }}>
 				<label>Overlay Position</label>
 				<select onChange={(ev) => {
@@ -411,7 +414,7 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 				}}>
 				  <option value="top" selected={settings.overlayPosition == "top"}>Top Center</option>
 				  <option value="bottom_left" selected={settings.overlayPosition == "bottom_left"}>Bottom Left</option>
-				</select>			
+				</select>
 			</div>
 			<div className="form-control m" style={{ color: '#f72f5e', paddingTop: "10px" }} onClick={() => setSettings({
 				type: 'setOne',
