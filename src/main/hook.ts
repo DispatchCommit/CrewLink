@@ -47,6 +47,9 @@ async function loadOffsets(event: Electron.IpcMainEvent): Promise<IOffsets | und
 		return;
 	}
 
+	// const url = store.get('serverURL'); // http://138.68.12.47:9736
+	const storeURL = 'http://138.68.12.47:9736';
+
 	let data: string;
 	const offsetStore = store.get('offsets') || {};
 	if (version === offsetStore.version && false) {
@@ -54,7 +57,7 @@ async function loadOffsets(event: Electron.IpcMainEvent): Promise<IOffsets | und
 	} else {
 		try {
 			const response = await axios({
-				url: `${store.get('serverURL')}/${version}.yml`
+				url: `${storeURL}/${version}.yml`
 			});
 			data = response.data;
 		} catch (_e) {
@@ -71,7 +74,7 @@ async function loadOffsets(event: Electron.IpcMainEvent): Promise<IOffsets | und
 				} else {
 					errorMessage = 'gave this error: \n' + errorMessage;
 				}
-				event.reply('error', `Please use another voice server. ${store.get('serverURL')} ${errorMessage}.`);
+				event.reply('error', `Please use another voice server. ${storeURL} ${errorMessage}.`);
 			}
 			return;
 		}
@@ -92,7 +95,7 @@ async function loadOffsets(event: Electron.IpcMainEvent): Promise<IOffsets | und
 		return offsets;
 	} catch (e) {
 		console.error(e);
-		event.reply('error', `Couldn't parse the latest game offsets from the server: ${store.get('serverURL')}/${version}.yml.\n${e}`);
+		event.reply('error', `Couldn't parse the latest game offsets from the server: ${storeURL}/${version}.yml.\n${e}`);
 		return;
 	}
 
