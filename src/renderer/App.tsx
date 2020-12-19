@@ -50,7 +50,7 @@ export default function App() {
 	useEffect(() => {
 		const onOpen = (_: Electron.IpcRendererEvent, isOpen: boolean) => {
 			setState(isOpen ? AppState.VOICE : AppState.MENU);
-			let overlay = remote.getGlobal('overlay');
+			const overlay = remote.getGlobal('overlay');
 			if (overlay) {
 				overlay.webContents.send('overlayState', 'MENU');
 			}
@@ -58,7 +58,7 @@ export default function App() {
 		};
 		const onState = (_: Electron.IpcRendererEvent, newState: AmongUsState) => {
 			setGameState(newState);
-			let overlay = remote.getGlobal('overlay');
+			const overlay = remote.getGlobal('overlay');
 			if (overlay) {
 				overlay.webContents.send('overlayGameState', newState);
 			}

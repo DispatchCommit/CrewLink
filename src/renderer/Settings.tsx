@@ -214,7 +214,7 @@ const Settings: React.FC<SettingsProps> = function ({ open, onClose }: SettingsP
 		});
 	}, []);
 	
-	let overlay = remote.getGlobal('overlay');
+	const overlay = remote.getGlobal('overlay');
 	if (overlay) {
 		overlay.webContents.send('overlaySettings', settings);
 	}
