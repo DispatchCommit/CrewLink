@@ -69,8 +69,9 @@ function calculateVoiceAudio(state: AmongUsState, settings: ISettings, me: Playe
 	}
 	if (me.isDead && other.isDead) {
 		gain.gain.value = 1;
-		pan.positionX.setValueAtTime(panPos[0], audioContext.currentTime);
-		pan.positionY.setValueAtTime(panPos[1], audioContext.currentTime);
+		// Ghosts have 3x hearing distance
+		pan.positionX.setValueAtTime(panPos[0] / 3, audioContext.currentTime);
+		pan.positionY.setValueAtTime(panPos[1] / 3, audioContext.currentTime);
 		return;
 	}
 	if (!me.isDead && other.isDead) {
@@ -254,12 +255,12 @@ const Voice: React.FC = function () {
 				Object.keys(peerConnections).forEach(k => {
 					disconnectPeer(k);
 				});
-				
+
 				const overlay = remote.getGlobal("overlay");
 				if (overlay) {
 					overlay.webContents.send('overlayState', (lobbyCode === 'MENU' ? "MENU" : "VOICE"));
 				}
-				
+
 				setSocketClients({});
 
 				if (lobbyCode === 'MENU') return;
@@ -334,7 +335,7 @@ const Voice: React.FC = function () {
 								...old,
 								[socketClientsRef.current[peer].playerId]: talking && gain.gain.value > 0
 							}));
-							
+
 							const overlay = remote.getGlobal("overlay");
 							if (overlay) {
 								const reallyTalking = talking && gain.gain.value > 0;
@@ -343,7 +344,7 @@ const Voice: React.FC = function () {
 							}
 
 							console.log(overlay);
-							
+
 							return socketPlayerIds;
 						});
 
