@@ -39,11 +39,11 @@ export default function App() {
 		compactOverlay: false,
 		overlayPosition: 'top',
 		localLobbySettings: {
-			maxDistance: 5.32,
+			maxDistance: 3.00,
 		},
 	});
 	const lobbySettings = useReducer(lobbySettingsReducer, {
-		maxDistance: 5.32
+		maxDistance: 3.00
 	});
 
 

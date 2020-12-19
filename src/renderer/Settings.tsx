@@ -120,7 +120,7 @@ const store = new Store<ISettings>({
 		localLobbySettings: {
 			type: 'object',
 			default: {
-				maxDistance: 5.32
+				maxDistance: 3.00
 			}
 		}
 	}
@@ -128,10 +128,7 @@ const store = new Store<ISettings>({
 
 store.onDidChange('serverURL', (newUrl) => {
 	if (newUrl === 'http://54.193.94.35:9736') {
-		store.set('serverURL', 'http://138.68.12.47:9736');
-	}
-	if (newUrl === 'https://public2.crewl.ink') {
-		store.set('serverURL', 'http://138.68.12.47:9736');
+		store.set('serverURL', 'https://public2.crewl.ink');
 	}
 });
 
@@ -191,7 +188,7 @@ function URLInput({ initialURL, onValidURL }: URLInputProps) {
 	}, [initialURL]);
 
 	function onChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const eventValue = event.target.value.trim();
+    const eventValue = event.target.value; // .trim();
 
 		if (validateURL(eventValue)) {
 			setURLValid(true);
