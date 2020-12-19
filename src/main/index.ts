@@ -15,7 +15,7 @@ declare global {
     interface Global {
        mainWindow: BrowserWindow|null;
        overlay: BrowserWindow|null;
-    } 
+    }
   }
 }
 // global reference to mainWindow (necessary to prevent window from being garbage collected)
@@ -73,7 +73,8 @@ function createMainWindow() {
 	}
 
 	window.on('closed', () => {
-		global.mainWindow = null;
+    global.overlay?.close();
+    app.quit();
 	});
 
 	window.webContents.on('devtools-opened', () => {
@@ -126,7 +127,7 @@ if (!gotTheLock) {
 		}
 		overlay.setIgnoreMouseEvents(true);
 		overlayWindow.attachTo(overlay, 'Among Us')
-		  
+
 		return overlay;
 	}
 
