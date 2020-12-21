@@ -174,6 +174,7 @@ const Voice: React.FC = function () {
 		socket.on('connect', () => {
 			setConnected(true);
 		});
+
 		socket.on('disconnect', () => {
 			setConnected(false);
 		});
@@ -183,6 +184,7 @@ const Voice: React.FC = function () {
 			connect: () => void;
 			destroy: () => void;
 		};
+
 		const audio = {
 			deviceId: undefined as unknown as string,
 			autoGainControl: false,
@@ -197,7 +199,7 @@ const Voice: React.FC = function () {
 			googAutoGainControl2: false,
 			googNoiseSuppression: false,
 			googHighpassFilter: false,
-			googTypingNoiseDetection: false
+			googTypingNoiseDetection: false,
 		};
 
 		// Get microphone settings
@@ -244,7 +246,7 @@ const Voice: React.FC = function () {
 					}
 				},
 				noiseCaptureDuration: 1,
-				stereo: false
+				stereo: false,
 			});
 
 			audioElements.current = {};
@@ -353,12 +355,14 @@ const Voice: React.FC = function () {
 					};
 					audioElements.current[peer] = { element: audio, gain, pan };
 				});
+
 				connection.on('signal', (data) => {
 					socket.emit('signal', {
 						data,
 						to: peer
 					});
 				});
+
 				connection.on('data', data => {
 					if (gameState.hostId !== socketClientsRef.current[peer].clientId) return;
 					const settings = JSON.parse(data);
@@ -373,10 +377,12 @@ const Voice: React.FC = function () {
 				});
 				return connection;
 			}
+
 			socket.on('join', async (peer: string, client: Client) => {
 				createPeerConnection(peer, true);
 				setSocketClients(old => ({ ...old, [peer]: client }));
 			});
+
 			socket.on('signal', ({ data, from }: { data: Peer.SignalData, from: string }) => {
 				let connection: Peer.Instance;
 				if (peerConnections[from]) {
@@ -386,9 +392,11 @@ const Voice: React.FC = function () {
 				}
 				connection.signal(data);
 			});
+
 			socket.on('setClient', (socketId: string, client: Client) => {
 				setSocketClients(old => ({ ...old, [socketId]: client }));
-			})
+			});
+
 			socket.on('setClients', (clients: SocketClientMap) => {
 				setSocketClients(clients);
 			});
@@ -454,7 +462,7 @@ const Voice: React.FC = function () {
 	}, [gameState.gameState]);
 
 	useEffect(() => {
-		if (gameState.isHost === true) {
+		if (gameState.isHost) {
 			setSettings({
 				type: 'setOne',
 				action: ['localLobbySettings', lobbySettings]
@@ -473,7 +481,14 @@ const Voice: React.FC = function () {
 		<div className="root">
 			<div className="top">
 				{myPlayer &&
-					<Avatar deafened={deafenedState} muted={mutedState} player={myPlayer} borderColor={connected ? '#2ecc71' : '#c0392b'} talking={talking} isAlive={!myPlayer.isDead} size={100} />
+					<Avatar
+            deafened={deafenedState}
+            muted={mutedState} player={myPlayer}
+            borderColor={connected ? '#2ecc71' : '#c0392b'}
+            talking={talking}
+            isAlive={!myPlayer.isDead}
+            size={100}
+          />
 					// <div className="avatar" style={{ borderColor: talking ? '#2ecc71' : 'transparent' }}>
 					// 	<Canvas src={alive} color={playerColors[myPlayer.colorId][0]} shadow={playerColors[myPlayer.colorId][1]} />
 					// </div>
@@ -481,7 +496,7 @@ const Voice: React.FC = function () {
 				<div className="right">
 					{myPlayer && gameState?.gameState !== GameState.MENU &&
 						<span className="username">
-							{gameState.isHost === true &&
+							{gameState.isHost &&
 								<svg viewBox="0 0 48 36">
 									<path fill="#fcdb03" d="M39.67,36H8.33a5,5,0,0,1-5-4.34L0,6.63a3,3,0,0,1,5-2.6l5.6,5.19A3,3,0,0,0,15,9l6.7-7.9a3,3,0,0,1,4.6,0L33,9a3,3,0,0,0,4.34.26L42.94,4a3,3,0,0,1,5,2.6l-3.33,25A5,5,0,0,1,39.67,36Z"/>
 								</svg>
@@ -502,11 +517,14 @@ const Voice: React.FC = function () {
 					otherPlayers.map(player => {
 						const connected = Object.values(socketClients).map(({playerId}) => playerId).includes(player.id);
 						return (
-							<Avatar key={player.id} player={player}
+							<Avatar
+                key={player.id}
+                player={player}
 								talking={!connected || otherTalking[player.id]}
 								borderColor={connected ? '#2ecc71' : '#c0392b'}
 								isAlive={!otherDead[player.id]}
-								size={50} />
+								size={50}
+              />
 						);
 					})
 				}
