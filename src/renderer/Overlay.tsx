@@ -41,7 +41,8 @@ export default function Overlay() {
 
 	let talkingPlayers: Player[];
 	if (!gameState || !gameState.players || gameState.lobbyCode === 'MENU' || !myPlayer) talkingPlayers = [];
-	else talkingPlayers = gameState.players.filter(p => (otherTalking[p.id] || (p.isLocal && talking)));
+	// else talkingPlayers = gameState.players.filter(p => (otherTalking[p.id] || (p.isLocal && talking)));
+	else talkingPlayers = gameState.players;
 
 	useEffect(() => {
 		if (gameState.gameState === GameState.LOBBY) {
@@ -74,12 +75,24 @@ export default function Overlay() {
 			setSocketPlayerIds(ids);
 		};
 
+		const onOverlaySocketClients = (_: Electron.IpcRendererEvent, socketClients: any) => {
+		  // Convert Client Mapping to Socket Mapping
+      const socketIds: SocketIdMap = {};
+      for (let s of Object.keys(socketClients)) {
+        socketIds[s] = socketClients.playerId;
+      }
+
+      // Set variable
+      setSocketPlayerIds(socketClients);
+		};
 
 		const onOverlayTalkingSelf = (_: Electron.IpcRendererEvent, talking: boolean) => {
+		  console.log( `Overlay Set Talking (self):`, talking );
 			setTalking(talking);
 		};
 
 		const onOverlayTalking = (_: Electron.IpcRendererEvent, id: number) => {
+      console.log( `Overlay Set Talking (other):`, id );
 			setOtherTalking(old => ({
 				...old,
 				[id]: true
@@ -87,6 +100,7 @@ export default function Overlay() {
 		};
 
 		const onOverlayNotTalking = (_: Electron.IpcRendererEvent, id: number) => {
+      console.log( `Overlay Set NOT Talking (other):`, id );
 			setOtherTalking(old => ({
 				...old,
 				[id]: false
@@ -98,6 +112,7 @@ export default function Overlay() {
 		ipcRenderer.on('overlayState', onOverlayState);
 		ipcRenderer.on('overlayGameState', onOverlayGameState);
 		ipcRenderer.on('overlaySocketIds', onOverlaySocketIds);
+		ipcRenderer.on('overlaySocketClients', onOverlaySocketClients);
 		ipcRenderer.on('overlayTalkingSelf', onOverlayTalkingSelf);
 		ipcRenderer.on('overlayTalking', onOverlayTalking);
 		ipcRenderer.on('overlayNotTalking', onOverlayNotTalking);
@@ -107,6 +122,7 @@ export default function Overlay() {
 			ipcRenderer.off('overlayState', onOverlayState);
 			ipcRenderer.off('overlayGameState', onOverlayGameState);
 			ipcRenderer.off('overlaySocketIds', onOverlaySocketIds);
+			ipcRenderer.off('overlaySocketClients', onOverlaySocketClients);
 			ipcRenderer.off('overlayTalkingSelf', onOverlayTalkingSelf);
 			ipcRenderer.off('overlayTalking', onOverlayTalking);
 			ipcRenderer.off('overlayNotTalking', onOverlayNotTalking);
@@ -158,30 +174,33 @@ export default function Overlay() {
 	}
 
 	let playerArea:JSX.Element = <></>;
-	if (playerList) {
-		playerArea = <div className="otherplayers" style={playersCSS}>
-					{
-						playerList.map(player => {
-							const connected = Object.values(socketPlayerIds).includes(player.id) || player.isLocal;
-							let name = settings.compactOverlay ? "" : <span><small>{player.name}</small></span>
-							return (
-								<div key={player.id} style={{width:"60px", textAlign:"center"}}>
-									<div style={{paddingLeft:"5px"}}>
-										<Avatar key={player.id} player={player}
-											talking={!connected || otherTalking[player.id] || (player.isLocal && talking)}
-											borderColor={connected ? '#2ecc71' : '#c0392b'}
-											isAlive={(!player.isLocal && !otherDead[player.id]) || (player.isLocal && !player.isDead)}
-											size={50} />
-									</div>
-									{name}
-								</div>
-							);
-						})
-					}
-					</div>
-	}
-
-
+  if (playerList) {
+    playerArea = <div className="otherplayers" style={playersCSS}>
+      {
+        playerList.map(player => {
+          const connected = Object.values(socketPlayerIds).includes(player.id) || player.isLocal;
+          let name = settings.compactOverlay ? "" : <span><small>{player.name}</small></span>
+          return (
+            <div key={player.id} style={{width:"60px", textAlign:"center"}}>
+              <div style={{paddingLeft:"5px"}}>
+                {player.id}
+                <Avatar
+                  key={player.id}
+                  player={player}
+                  talking={!connected || otherTalking[player.id] || (player.isLocal && talking)}
+                  borderColor={connected ? '#2ecc71' : '#c0392b'}
+                  isAlive={(!player.isLocal && !otherDead[player.id]) || (player.isLocal && !player.isDead)}
+                  size={50}
+                />
+              </div>
+              {name}
+            </div>
+          );
+        })
+      }
+    </div>
+  }
+  
 
 	return (
 	<div style={baseCSS}>

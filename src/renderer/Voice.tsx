@@ -142,6 +142,7 @@ const Voice: React.FC = function () {
 	// Add socketClients to socketClientsRef
 	useEffect(() => {
 		socketClientsRef.current = socketClients;
+		console.log( `socketClients change: `, socketClients );
 	}, [socketClients]);
 
 	// Set dead player data
@@ -216,11 +217,13 @@ const Voice: React.FC = function () {
 				stream.getAudioTracks()[0].enabled = !connectionStuff.current.deafened && !connectionStuff.current.muted;
 				setDeafened(connectionStuff.current.deafened);
 			});
+
       ipcRenderer.on('toggleMute', () => {
         connectionStuff.current.muted = !connectionStuff.current.muted;
         stream.getAudioTracks()[0].enabled = !connectionStuff.current.muted && !connectionStuff.current.deafened;
         setMuted(connectionStuff.current.muted);
       });
+
 			ipcRenderer.on('pushToTalk', (_: unknown, pressing: boolean) => {
 				if (!connectionStuff.current.pushToTalk) return;
 				if (!connectionStuff.current.deafened) {
@@ -277,6 +280,7 @@ const Voice: React.FC = function () {
 						delete connections[peer];
 						return connections;
 					});
+
 					if (audioElements.current[peer]) {
 						document.body.removeChild(audioElements.current[peer].element);
 						audioElements.current[peer].pan.disconnect();
@@ -287,6 +291,7 @@ const Voice: React.FC = function () {
 
 				socket.emit('join', lobbyCode, playerId, clientId);
 			};
+
 			setConnect({ connect });
 			function createPeerConnection(peer: string, initiator: boolean) {
 				const connection = new Peer({
@@ -298,6 +303,7 @@ const Voice: React.FC = function () {
 						]
 					}
 				});
+
 				setPeerConnections(connections => {
 					connections[peer] = connection;
 					return connections;
@@ -331,7 +337,7 @@ const Voice: React.FC = function () {
 
 					const setTalking = (talking: boolean) => {
 
-						setSocketClients(socketPlayerIds => {
+						/*setSocketClients(socketPlayerIds => {
 
 							setOtherTalking(old => ({
 								...old,
@@ -345,14 +351,33 @@ const Voice: React.FC = function () {
 								overlay.webContents.send('overlaySocketIds', socketPlayerIds);
 							}
 
-							console.log(overlay);
+							// console.log(overlay);
+							console.log(socketPlayerIds);
 
 							return socketPlayerIds;
-						});
+						});*/
 
-						// const overlay = remote.getGlobal("overlay");
-						// if (overlay) overlay.webContents.send('overlaySocketIds', socketPlayerIds);
+						/*const overlay = remote.getGlobal("overlay");
+						if (overlay) overlay.webContents.send('overlaySocketIds', socketClients);*/
+
+            setOtherTalking(old => ({
+              ...old,
+              [socketClientsRef.current[peer].playerId]: talking && gain.gain.value > 0
+            }));
+
+            const overlay = remote.getGlobal("overlay");
+            if (overlay) {
+              const reallyTalking = talking && gain.gain.value > 0;
+              overlay.webContents.send(reallyTalking ? 'overlayTalking' : 'overlayNotTalking', socketClientsRef.current[peer].playerId);
+
+              overlay.webContents.send('overlaySocketClients', socketClientsRef.current);
+              console.log( `Set overlay socket clients:`, socketClientsRef.current );
+            }
+
+            // console.log( `Socket Clients: `, socketClients );
+            console.log( `Socket Clients Ref (current): `, socketClientsRef.current );
 					};
+
 					audioElements.current[peer] = { element: audio, gain, pan };
 				});
 
@@ -395,10 +420,12 @@ const Voice: React.FC = function () {
 
 			socket.on('setClient', (socketId: string, client: Client) => {
 				setSocketClients(old => ({ ...old, [socketId]: client }));
+				console.log( `setClient (socket data):`, client );
 			});
 
 			socket.on('setClients', (clients: SocketClientMap) => {
 				setSocketClients(clients);
+        console.log( `setClients (socket data):`, clients );
 			});
 
 		}, (error) => {
@@ -413,14 +440,18 @@ const Voice: React.FC = function () {
 	}, []);
 
 
+  // My Player
 	const myPlayer = useMemo(() => {
 		if (!gameState || !gameState.players) {
 			return undefined;
-		} else {
-			return gameState.players.find((p) => p.isLocal);
 		}
+
+    const me = gameState.players.find((p) => p.isLocal);
+    // console.log( `My Player Data:`, me );
+    return me;
 	}, [gameState.players]);
 
+	// All players that are not us
 	const otherPlayers = useMemo(() => {
 		let otherPlayers: Player[];
 		if (!gameState || !gameState.players || gameState.lobbyCode === 'MENU' || !myPlayer) return [];
@@ -429,12 +460,21 @@ const Voice: React.FC = function () {
 		const playerSocketIds: {
 			[index: number]: string
 		} = {};
+
 		for (const k of Object.keys(socketClients)) {
 			playerSocketIds[socketClients[k].playerId] = k;
 		}
+
+		// Debug Helper
+    /*for (const player of gameState.players) {
+      console.log( `Player States:`, player );
+    }*/
+
 		const overlay = remote.getGlobal("overlay");
-		if (overlay) overlay.webContents.send('overlaySocketIds', socketClients);
-		for (const player of otherPlayers) {
+		// if (overlay) overlay.webContents.send('overlaySocketIds', socketClients);
+    if (overlay) overlay.webContents.send('overlaySocketClients', socketClientsRef.current);
+
+    for (const player of otherPlayers) {
 			const audio = audioElements.current[playerSocketIds[player.id]];
 			if (audio) {
 				calculateVoiceAudio(gameState, settingsRef.current, myPlayer, player, audio.gain, audio.pan);
@@ -456,11 +496,13 @@ const Voice: React.FC = function () {
 
 	// Connect to P2P negotiator, when game mode change
 	useEffect(() => {
+	  console.log( `Gamestate Changed:`, gameState );
 		if (connect?.connect && gameState.lobbyCode && myPlayer?.id !== undefined && gameState.gameState === GameState.LOBBY && (gameState.oldGameState === GameState.DISCUSSION || gameState.oldGameState === GameState.TASKS)) {
 			connect.connect(gameState.lobbyCode, myPlayer.id, gameState.clientId);
 		}
 	}, [gameState.gameState]);
 
+	// Check if player is lobby host
 	useEffect(() => {
 		if (gameState.isHost) {
 			setSettings({
