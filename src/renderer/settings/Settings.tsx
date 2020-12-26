@@ -134,7 +134,7 @@ const store = new Store<ISettings>({
 		'1.1.5': (store) => {
 			const serverURL = store.get('serverURL');
 			if (serverURL === 'http://54.193.94.35:9736') {
-				store.set('serverURL', 'https://crewl.ink');
+				store.set('serverURL', 'http://138.68.12.47:9736');
 			}
 		},
 		'1.1.6': (store) => {
@@ -169,7 +169,7 @@ const store = new Store<ISettings>({
 		},
 		serverURL: {
 			type: 'string',
-			default: 'https://crewl.ink',
+			default: 'http://138.68.12.47:9736',
 			format: 'uri',
 		},
 		pushToTalkShortcut: {
@@ -197,7 +197,7 @@ const store = new Store<ISettings>({
 			properties: {
 				maxDistance: {
 					type: 'number',
-					default: 5.32,
+					default: 3.00,
 				},
 			},
 		},

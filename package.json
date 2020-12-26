@@ -1,20 +1,20 @@
 {
-  "name": "crewlink",
-  "version": "1.1.6",
+  "name": "dispatchlink",
+  "version": "1.1.21",
   "license": "GPL-3.0-or-later",
   "description": "Free, open, Among Us proximity voice chat",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ottomated/crewlink.git"
+    "url": "https://github.com/dispatchcommit/DispatchLink.git"
   },
   "funding": {
     "type": "individual",
-    "url": "https://paypal.me/ottomated"
+    "url": "https://paypal.me/xanderluciano"
   },
   "author": {
-    "name": "Ottomated",
-    "email": "otto@ottomated.net",
-    "url": "https://ottomated.net"
+    "name": "DispatchCommit",
+    "email": "dispatchcommit@gmail.com",
+    "url": "https://twitter.com/dispatchcommit"
   },
   "scripts": {
     "postinstall": "electron-builder install-app-deps",

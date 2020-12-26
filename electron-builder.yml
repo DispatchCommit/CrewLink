@@ -1,6 +1,6 @@
-appId: net.ottomated.crewlink
-productName: CrewLink
-copyright: Copyright © 2020 Ottomated
+appId: net.dispatchplays.crewlink
+productName: DispatchLink
+copyright: Copyright © 2020 DispatchPlays
 directories:
   output: dist
   buildResources: resources

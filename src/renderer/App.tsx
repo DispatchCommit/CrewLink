@@ -79,7 +79,7 @@ const TitleBar: React.FC<TitleBarProps> = function ({
 	const classes = useStyles();
 	return (
 		<div className={classes.root}>
-			<span className={classes.title}>CrewLink{appVersion}</span>
+			<span className={classes.title}>DispatchLink{appVersion}</span>
 			<IconButton
 				className={classes.button}
 				style={{ left: 0 }}
@@ -157,6 +157,7 @@ function App() {
 		ipcRenderer.on(IpcRendererMessages.NOTIFY_GAME_OPENED, onOpen);
 		ipcRenderer.on(IpcRendererMessages.NOTIFY_GAME_STATE_CHANGED, onState);
 		ipcRenderer.on(IpcRendererMessages.ERROR, onError);
+
 		return () => {
 			ipcRenderer.off(IpcRendererMessages.AUTO_UPDATER_STATE, onAutoUpdaterStateChange);
 			ipcRenderer.off(IpcRendererMessages.NOTIFY_GAME_OPENED, onOpen);
@@ -205,7 +206,7 @@ function App() {
 								}
 							</DialogContent>
 							{updaterState.state === 'error' &&
-								<DialogActions><Button href="https://github.com/ottomated/CrewLink/releases/latest">Download Manually</Button></DialogActions>
+								<DialogActions><Button href="https://github.com/DispatchCommit/DispatchLink/releases/latest">Download Manually</Button></DialogActions>
 							}
 						</Dialog>
 						{page}
