@@ -197,9 +197,12 @@ const store = new Store<ISettings>({
 			properties: {
 				maxDistance: {
 					type: 'number',
-					default: 3.00,
+					default: 3,
 				},
 			},
+      default: {
+        maxDistance: 3,
+      },
 		},
 	},
 });
@@ -336,12 +339,13 @@ const Settings: React.FC<SettingsProps> = function ({
 	const [lobbySettings, setLobbySettings] = useContext(LobbySettingsContext);
 	const [unsavedCount, setUnsavedCount] = useState(0);
 	const unsaved = unsavedCount > 2;
+
 	useEffect(() => {
 		setSettings({
 			type: 'set',
 			action: store.store,
 		});
-		console.log(store.get('localLobbySettings'));
+		console.log( `localLobbySettings:`, store.get('localLobbySettings'));
 		setLobbySettings({
 			type: 'set',
 			action: store.get('localLobbySettings')
@@ -415,6 +419,7 @@ const Settings: React.FC<SettingsProps> = function ({
 	const microphones = devices.filter((d) => d.kind === 'audioinput');
 	const speakers = devices.filter((d) => d.kind === 'audiooutput');
 	const [localDistance, setLocalDistance] = useState(settings.localLobbySettings.maxDistance);
+
 	useEffect(() => {
 		setLocalDistance(settings.localLobbySettings.maxDistance);
 	}, [settings.localLobbySettings.maxDistance]);
@@ -453,7 +458,9 @@ const Settings: React.FC<SettingsProps> = function ({
 						});
 					}}
 				/>
+
 				<Divider />
+
 				{/* Lobby Settings */}
 				<div>
 					<Typography variant="h6">Lobby Settings</Typography>
@@ -487,7 +494,9 @@ const Settings: React.FC<SettingsProps> = function ({
 						/>
 					</DisabledTooltip>
 				</div>
+
 				<Divider />
+
 				<TextField
 					select
 					label="Microphone"

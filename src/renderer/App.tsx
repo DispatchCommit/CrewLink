@@ -123,10 +123,11 @@ function App() {
 		hideCode: false,
 		enableSpatialAudio: true,
 		localLobbySettings: {
-			maxDistance: 3.00,
+      maxDistance: 3,
 		},
 	});
 	const lobbySettings = useReducer(lobbySettingsReducer, settings[0].localLobbySettings);
+	// console.log( `settings:`, settings );
 
 	useEffect(() => {
 		const onOpen = (_: Electron.IpcRendererEvent, isOpen: boolean) => {
@@ -185,14 +186,20 @@ function App() {
 			<LobbySettingsContext.Provider value={lobbySettings}>
 				<SettingsContext.Provider value={settings}>
 					<ThemeProvider theme={theme}>
+
+            {/* Title bar */}
 						<TitleBar
 							settingsOpen={settingsOpen}
 							setSettingsOpen={setSettingsOpen}
 						/>
+
+						{/* Settings Panel */}
 						<Settings
 							open={settingsOpen}
 							onClose={() => setSettingsOpen(false)}
 						/>
+
+						{/* Update Dialog */}
 						<Dialog fullWidth open={updaterState.state !== 'unavailable'}>
 							<DialogTitle>Installing Updates</DialogTitle>
 							<DialogContent>
@@ -211,7 +218,10 @@ function App() {
 								<DialogActions><Button href="https://github.com/DispatchCommit/DispatchLink/releases/latest">Download Manually</Button></DialogActions>
 							}
 						</Dialog>
+
+            {/* Application */}
 						{page}
+
 					</ThemeProvider>
 				</SettingsContext.Provider>
 			</LobbySettingsContext.Provider>
