@@ -116,14 +116,14 @@ function App() {
 		microphone: 'Default',
 		speaker: 'Default',
 		pushToTalk: false,
-		serverURL: 'https://crewl.ink',
+		serverURL: 'http://138.68.12.47:9736',
 		pushToTalkShortcut: 'V',
 		deafenShortcut: 'RControl',
 		muteShortcut: 'RAlt',
 		hideCode: false,
 		enableSpatialAudio: true,
 		localLobbySettings: {
-			maxDistance: 5.32,
+			maxDistance: 3.00,
 		},
 	});
 	const lobbySettings = useReducer(lobbySettingsReducer, settings[0].localLobbySettings);
@@ -153,6 +153,7 @@ function App() {
 				setError(error.message);
 			}
 		});
+
 		ipcRenderer.on(IpcRendererMessages.AUTO_UPDATER_STATE, onAutoUpdaterStateChange);
 		ipcRenderer.on(IpcRendererMessages.NOTIFY_GAME_OPENED, onOpen);
 		ipcRenderer.on(IpcRendererMessages.NOTIFY_GAME_STATE_CHANGED, onState);
@@ -177,7 +178,8 @@ function App() {
 			break;
 	}
 
-	console.log(updaterState);
+	// console.log(`updaterState (App.tsx)`, updaterState);
+
 	return (
 		<GameStateContext.Provider value={gameState}>
 			<LobbySettingsContext.Provider value={lobbySettings}>

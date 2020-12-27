@@ -22,10 +22,10 @@ function createMainWindow() {
 
 	const window = new BrowserWindow({
 		width: 250,
-		height: 350,
+		height: 400,
 		maxWidth: 250,
 		minWidth: 250,
-		maxHeight: 350,
+		maxHeight: 450,
 		minHeight: 350,
 		x: mainWindowState.x,
 		y: mainWindowState.y,
@@ -100,7 +100,7 @@ if (!gotTheLock) {
 	autoUpdater.on('download-progress', (progress: ProgressInfo) => {
 		mainWindow?.webContents.send(IpcRendererMessages.AUTO_UPDATER_STATE, {
 			state: 'downloading',
-			progress
+			progress,
 		});
 	});
 	autoUpdater.on('update-downloaded', () => {
