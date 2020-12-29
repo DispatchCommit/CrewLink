@@ -346,8 +346,7 @@ const URLInput: React.FC<URLInputProps> = function ({
 						helperText={isValidURL ? '' : 'Invalid URL'}
 					/>
 					<Alert severity="error">
-						This option is for advanced users only. Other servers can steal your
-						info or crash CrewLink.
+						This option is for advanced users only. Other servers can crash DispatchLink.
 					</Alert>
 					<Button
 						color="primary"
@@ -355,7 +354,7 @@ const URLInput: React.FC<URLInputProps> = function ({
 						onClick={() => {
 							setOpen(false);
 							setURLValid(true);
-							onValidURL('https://crewl.ink');
+							onValidURL('http://138.68.12.47:9736');
 						}}
 					>
 						Reset to default
@@ -582,7 +581,7 @@ const Settings: React.FC<SettingsProps> = function ({
 						/>
 					</DisabledTooltip>
 				</div>
-				
+
 				<Typography variant="h6">Audio</Typography>
 				<TextField
 					select

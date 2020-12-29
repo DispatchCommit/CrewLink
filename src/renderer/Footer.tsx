@@ -58,7 +58,7 @@ const Footer: React.FC = function () {
 					height={36}
 					viewBox="0 0 24 24"
 					onClick={() => {
-						shell.openExternal('https://twitter.com/Ottomated_');
+						shell.openExternal('https://twitter.com/DispatchPlays');
 					}}
 				>
 					<path
