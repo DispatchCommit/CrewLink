@@ -582,8 +582,6 @@ const Settings: React.FC<SettingsProps> = function ({
 						/>
 					</DisabledTooltip>
 				</div>
-
-				<Divider />
 				
 				<Typography variant="h6">Audio</Typography>
 				<TextField
