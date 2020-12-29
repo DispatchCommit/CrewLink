@@ -124,7 +124,7 @@ function App() {
 		microphone: 'Default',
 		speaker: 'Default',
 		pushToTalk: false,
-		serverURL: 'http://138.68.12.47:9736',
+		serverURL: 'http://vc.dispatchplays.tv:9736',
 		pushToTalkShortcut: 'V',
 		deafenShortcut: 'RControl',
 		muteShortcut: 'RAlt',
@@ -138,7 +138,7 @@ function App() {
 		lobbySettingsReducer,
 		settings[0].localLobbySettings
 	);
-	console.log( `settings:`, settings );
+	// console.log( `settings:`, settings );
 
 	useEffect(() => {
 		const onOpen = (_: Electron.IpcRendererEvent, isOpen: boolean) => {

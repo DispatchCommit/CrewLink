@@ -102,6 +102,10 @@ function calculateVoiceAudio(
 	panPos[0] = Math.min(999, Math.max(-999, panPos[0]));
 	panPos[1] = Math.min(999, Math.max(-999, panPos[1]));
 
+  // Log player data
+  const dist = Math.sqrt(Math.pow(panPos[0], 2) + Math.pow(panPos[1], 2));
+  console.log( `Me:`, me, `Other:`, other, `Distance:`, dist.toFixed(3) );
+
 	/* Other player is in a vent */
 	if (other.inVent) {
 		gain.gain.value = 0;
@@ -145,9 +149,6 @@ function calculateVoiceAudio(
 	) {
 		gain.gain.value = 0;
 	}
-
-	console.log( `My Data:`, me );
-	console.log( `Player Data:`, other );
 }
 
 export interface VoiceProps {
@@ -306,6 +307,7 @@ const Voice: React.FC<VoiceProps> = function ({
 	// Add socketClients to socketClientsRef
 	useEffect(() => {
 		socketClientsRef.current = socketClients;
+		console.log( `socketClients:`, socketClients );
 	}, [socketClients]);
 
 	// Add lobbySettings to lobbySettingsRef
@@ -348,9 +350,11 @@ const Voice: React.FC<VoiceProps> = function ({
 				setError(error.message);
 			}
 		});
+
 		socket.on('connect', () => {
 			setConnected(true);
 		});
+
 		socket.on('disconnect', () => {
 			setConnected(false);
 		});

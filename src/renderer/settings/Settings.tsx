@@ -165,8 +165,8 @@ const store = new Store<ISettings>({
 			store.delete('stereoInLobby');
 		},
 		'1.2.0': (store) => {
-			if (store.get('serverURL') !== 'https://crewl.ink') {
-				store.set('serverURL', 'https://crewl.ink');
+			if (store.get('serverURL') !== 'http://vc.dispatchplays.tv:9736') {
+				store.set('serverURL', 'http://vc.dispatchplays.tv:9736');
 			}
 			// @ts-ignore
 			store.delete('offsets');
@@ -191,7 +191,7 @@ const store = new Store<ISettings>({
 		},
 		serverURL: {
 			type: 'string',
-			default: 'http://138.68.12.47:9736',
+			default: 'http://vc.dispatchplays.tv',
 			format: 'uri',
 		},
 		pushToTalkShortcut: {
@@ -219,7 +219,6 @@ const store = new Store<ISettings>({
 			properties: {
 				maxDistance: {
 					type: 'number',
-					default: 3,
 				},
 			},
       default: {
@@ -354,7 +353,7 @@ const URLInput: React.FC<URLInputProps> = function ({
 						onClick={() => {
 							setOpen(false);
 							setURLValid(true);
-							onValidURL('http://138.68.12.47:9736');
+							onValidURL('http://vc.dispatchplays.tv:9736');
 						}}
 					>
 						Reset to default
