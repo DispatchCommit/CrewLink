@@ -11,11 +11,12 @@ import Peer from 'simple-peer';
 import { ipcRenderer } from 'electron';
 import VAD from './vad';
 import { ISettings } from '../common/ISettings';
-import { IpcMessages, IpcRendererMessages } from '../common/ipc-messages';
+import { IpcRendererMessages } from '../common/ipc-messages';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import makeStyles from '@material-ui/core/styles/makeStyles';
 import SupportLink from './SupportLink';
+import Divider from '@material-ui/core/Divider';
 
 export interface ExtendedAudioElement extends HTMLAudioElement {
 	setSinkId: (sinkId: string) => Promise<void>;
@@ -25,16 +26,17 @@ interface PeerConnections {
 	[peer: string]: Peer.Instance;
 }
 
-type PeerErrorCode = 'ERR_WEBRTC_SUPPORT'
-  | 'ERR_CREATE_OFFER'
-  | 'ERR_CREATE_ANSWER'
-  | 'ERR_SET_LOCAL_DESCRIPTION'
-  | 'ERR_SET_REMOTE_DESCRIPTION'
-  | 'ERR_ADD_ICE_CANDIDATE'
-  | 'ERR_ICE_CONNECTION_FAILURE'
-  | 'ERR_SIGNALING'
-  | 'ERR_DATA_CHANNEL'
-  | 'ERR_CONNECTION_FAILURE';
+type PeerErrorCode =
+	| 'ERR_WEBRTC_SUPPORT'
+	| 'ERR_CREATE_OFFER'
+	| 'ERR_CREATE_ANSWER'
+	| 'ERR_SET_LOCAL_DESCRIPTION'
+	| 'ERR_SET_REMOTE_DESCRIPTION'
+	| 'ERR_ADD_ICE_CANDIDATE'
+	| 'ERR_ICE_CONNECTION_FAILURE'
+	| 'ERR_SIGNALING'
+	| 'ERR_DATA_CHANNEL'
+	| 'ERR_CONNECTION_FAILURE';
 
 interface AudioElements {
 	[peer: string]: {
@@ -71,6 +73,10 @@ interface AudioConnected {
 interface Client {
 	playerId: number;
 	clientId: number;
+}
+
+interface SocketError {
+	message?: string;
 }
 
 /* Calculate positional audio */
@@ -205,7 +211,10 @@ const useStyles = makeStyles((theme) => ({
 	},
 }));
 
-const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
+const Voice: React.FC<VoiceProps> = function ({
+	error: initialError,
+}: VoiceProps) {
+	const [error, setError] = useState(initialError);
 	const [settings, setSettings] = useContext(SettingsContext);
 	const settingsRef = useRef<ISettings>(settings);
 	const [lobbySettings, setLobbySettings] = useContext(LobbySettingsContext);
@@ -277,7 +286,7 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 				peer.send(JSON.stringify(settings.localLobbySettings));
 				console.log( `peer.send: localLobbySettings`, settings.localLobbySettings );
 			} catch (e) {
-				console.warn("failed to update lobby settings: ", e);
+				console.warn('failed to update lobby settings: ', e);
 			}
 		});
 	}, [settings.localLobbySettings]);
@@ -334,6 +343,11 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 		});
 		const { socket } = connectionStuff.current;
 
+		socket.on('error', (error: SocketError) => {
+			if (error.message) {
+				setError(error.message);
+			}
+		});
 		socket.on('connect', () => {
 			setConnected(true);
 		});
@@ -380,12 +394,15 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 					setMuted(connectionStuff.current.muted);
 					setDeafened(connectionStuff.current.deafened);
 				});
-				ipcRenderer.on(IpcRendererMessages.PUSH_TO_TALK, (_: unknown, pressing: boolean) => {
-					if (!connectionStuff.current.pushToTalk) return;
-					if (!connectionStuff.current.deafened) {
-						stream.getAudioTracks()[0].enabled = pressing;
+				ipcRenderer.on(
+					IpcRendererMessages.PUSH_TO_TALK,
+					(_: unknown, pressing: boolean) => {
+						if (!connectionStuff.current.pushToTalk) return;
+						if (!connectionStuff.current.deafened) {
+							stream.getAudioTracks()[0].enabled = pressing;
+						}
 					}
-				});
+				);
 
 				const ac = new AudioContext();
 				ac.createMediaStreamSource(stream);
@@ -457,18 +474,16 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 							try {
 								connection.send(JSON.stringify(lobbySettingsRef.current));
 							} catch (e) {
-								console.warn("failed to update lobby settings: ", e);
+								console.warn('failed to update lobby settings: ', e);
 							}
 						}
 					});
 
 					connection.on('stream', (stream: MediaStream) => {
-						setAudioConnected(old => ({
-              ...old,
-              [peer]: true,
-						}));
-
-						const audio = document.createElement( 'audio' ) as ExtendedAudioElement;
+						setAudioConnected((old) => ({ ...old, [peer]: true }));
+						const audio = document.createElement(
+							'audio'
+						) as ExtendedAudioElement;
 						document.body.appendChild(audio);
 						audio.srcObject = stream;
 						if (settingsRef.current.speaker.toLowerCase() !== 'default')
@@ -540,15 +555,13 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 
 						// Auto reconnect on connection error
 						if (
-						  initiator
-              && errCode
-              && retries < 10
-              && (
-                errCode == 'ERR_CONNECTION_FAILURE'
-                || errCode == 'ERR_DATA_CHANNEL'
-              )
-            ) {
-						  console.log( `Attempting to reconnect to peer (${retries}/10):`, peer, `Initiator:`, initiator );
+							initiator &&
+							errCode &&
+							retries < 10 &&
+							(errCode == 'ERR_CONNECTION_FAILURE' ||
+								errCode == 'ERR_DATA_CHANNEL')
+						) {
+							console.log( `Attempting to reconnect to peer (${retries}/10):`, peer, `Initiator:`, initiator );
 						  console.log( `create peer:`, peer, 'Initiator:', initiator );
 							createPeerConnection(peer, initiator);
 							retries++;
@@ -592,10 +605,11 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 			},
 			(error) => {
 				console.error(error);
-				ipcRenderer.send(IpcMessages.SHOW_ERROR_DIALOG, {
-					title: 'Error',
-					content: 'Couldn\'t connect to your microphone:\n' + error
-				});
+				setError("Couldn't connect to your microphone:\n" + error);
+				// ipcRenderer.send(IpcMessages.SHOW_ERROR_DIALOG, {
+				// 	title: 'Error',
+				// 	content: 'Couldn\'t connect to your microphone:\n' + error
+				// });
 			}
 		);
 
@@ -672,12 +686,11 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 				gameState.oldGameState === GameState.TASKS)
 		) {
 			connect.connect(gameState.lobbyCode, myPlayer.id, gameState.clientId);
-		}
-		else if (
-		  gameState.oldGameState !== GameState.UNKNOWN
-      && gameState.oldGameState !== GameState.MENU
-      && gameState.gameState === GameState.MENU
-    ) {
+		} else if (
+			gameState.oldGameState !== GameState.UNKNOWN &&
+			gameState.oldGameState !== GameState.MENU &&
+			gameState.gameState === GameState.MENU
+		) {
 			// On change from a game to menu, exit from the current game properly
 			connectionStuff.current.socket?.emit('leave');
 			Object.keys(peerConnections).forEach((k) => {
@@ -685,7 +698,6 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 			});
 			setOtherDead({});
 		}
-
 	}, [gameState.gameState]);
 
 	useEffect(() => {
@@ -713,7 +725,7 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 	}, [myPlayer?.id]);
 
 	const playerSocketIds: {
-		[index: number]: string
+		[index: number]: string;
 	} = {};
 
 	for (const k of Object.keys(socketClients)) {
@@ -751,9 +763,7 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 				)}
 				<div className={classes.right}>
 					{myPlayer && gameState?.gameState !== GameState.MENU && (
-						<span className={classes.username}>
-							{myPlayer.name}
-						</span>
+						<span className={classes.username}>{myPlayer.name}</span>
 					)}
 					{gameState.lobbyCode && (
 						<span
@@ -768,7 +778,7 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 					)}
 				</div>
 			</div>
-			{gameState.lobbyCode && <hr />}
+			{gameState.lobbyCode && <Divider />}
 			<Grid
 				container
 				spacing={1}
@@ -790,18 +800,20 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 							xs={getPlayersPerRow(otherPlayers.length)}
 						>
 							<Avatar
-								connectionState={!connected ? 'disconnected' : audio ? 'connected' : 'novoice'}
+								connectionState={
+									!connected ? 'disconnected' : audio ? 'connected' : 'novoice'
+								}
 								player={player}
 								talking={otherTalking[player.id]}
-								borderColor='#2ecc71'
+								borderColor="#2ecc71"
 								isAlive={!otherDead[player.id]}
 								size={50}
 							/>
 						</Grid>
 					);
 				})}
-			</Grid >
-		</div >
+			</Grid>
+		</div>
 	);
 };
 

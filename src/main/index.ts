@@ -37,24 +37,26 @@ function createMainWindow() {
 		transparent: true,
 		webPreferences: {
 			nodeIntegration: true,
-			webSecurity: false
-		}
+			webSecurity: false,
+		},
 	});
 
 	mainWindowState.manage(window);
-
 	if (isDevelopment) {
 		// Force devtools into detached mode otherwise they are unusable
 		window.webContents.openDevTools({
-			mode: 'detach'
+			mode: 'detach',
 		});
 	}
 
+	let crewlinkVersion: string;
 	if (isDevelopment) {
+		crewlinkVersion = '0.0.0';
 		window.loadURL(
 			`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}?version=DEV`
 		);
 	} else {
+		crewlinkVersion = autoUpdater.currentVersion.version;
 		window.loadURL(
 			formatUrl({
 				pathname: joinPath(__dirname, 'index.html'),
@@ -66,6 +68,7 @@ function createMainWindow() {
 			})
 		);
 	}
+	window.webContents.userAgent = `CrewLink/${crewlinkVersion} (${process.platform})`;
 
 	window.on('closed', () => {
 		mainWindow = null;
@@ -88,13 +91,13 @@ if (!gotTheLock) {
 	autoUpdater.checkForUpdates();
 	autoUpdater.on('update-available', () => {
 		mainWindow?.webContents.send(IpcRendererMessages.AUTO_UPDATER_STATE, {
-			state: 'available'
+			state: 'available',
 		});
 	});
 	autoUpdater.on('error', (err: string) => {
 		mainWindow?.webContents.send(IpcRendererMessages.AUTO_UPDATER_STATE, {
 			state: 'error',
-			error: err
+			error: err,
 		});
 	});
 	autoUpdater.on('download-progress', (progress: ProgressInfo) => {
