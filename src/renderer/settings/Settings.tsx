@@ -536,15 +536,6 @@ const Settings: React.FC<SettingsProps> = function ({
 			</div>
 
 			<div className={classes.scroll}>
-				<URLInput
-					initialURL={settings.serverURL}
-					onValidURL={(url: string) => {
-						setSettings({
-							type: 'setOne',
-							action: ['serverURL', url],
-						});
-					}}
-				/>
 
 				<Divider />
 
