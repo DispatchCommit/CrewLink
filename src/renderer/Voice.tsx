@@ -139,6 +139,9 @@ function calculateVoiceAudio(
 	) {
 		gain.gain.value = 0;
 	}
+
+	console.log( `My Data:`, me );
+	console.log( `Player Data:`, other );
 }
 
 export interface VoiceProps {
@@ -232,19 +235,31 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 	function disconnectPeer(peer: string) {
 		const connection = peerConnections[peer];
 		if (!connection) {
+		  console.log( `Attempted to delete a peer that does not exist:`, peer );
 			return;
 		}
 		connection.destroy();
+
 		setPeerConnections((connections) => {
 			delete connections[peer];
 			return connections;
 		});
+
 		if (audioElements.current[peer]) {
 			document.body.removeChild(audioElements.current[peer].element);
 			audioElements.current[peer].pan.disconnect();
 			audioElements.current[peer].gain.disconnect();
 			delete audioElements.current[peer];
 		}
+
+		console.log( `disconnect peer:`, audioConnected[peer], 'peer:', peer );
+
+		const audioConnection = audioConnected[peer];
+		if ( !audioConnection ) return;
+		setAudioConnected((connections) => {
+		  delete connections[peer];
+		  return connections;
+    });
 	}
 
 	// Handle pushToTalk, if set
@@ -388,8 +403,10 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 					playerId: number,
 					clientId: number
 				) => {
-					console.log('Connect called', lobbyCode, playerId, clientId);
+					console.log('Connect called - Lobby:', lobbyCode, 'PlayerId:', playerId, 'ClientId', clientId);
+
 					socket.emit('leave');
+
 					if (lobbyCode === 'MENU') {
 						Object.keys(peerConnections).forEach((k) => {
 							disconnectPeer(k);
@@ -446,7 +463,11 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 					});
 
 					connection.on('stream', (stream: MediaStream) => {
-						setAudioConnected(old => ({ ...old, [peer]: true }));
+						setAudioConnected(old => ({
+              ...old,
+              [peer]: true,
+						}));
+
 						const audio = document.createElement( 'audio' ) as ExtendedAudioElement;
 						document.body.appendChild(audio);
 						audio.srcObject = stream;
@@ -475,13 +496,16 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 						});
 
 						const setTalking = (talking: boolean) => {
+						  // const playerId = socketClientsRef.current[peer].playerId || socketClientsRef.current[peer].id;
 							setOtherTalking((old) => ({
 								...old,
 								[socketClientsRef.current[peer].playerId]:
 									talking && gain.gain.value > 0,
 							}));
+
 							console.log( `Peer:`, socketClientsRef.current[peer], `Talking:`, talking );
 						};
+
 						audioElements.current[peer] = { element: audio, gain, pan };
 					});
 
@@ -495,7 +519,9 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 					connection.on('data', (data) => {
 						if (gameState.hostId !== socketClientsRef.current[peer].clientId)
 							return;
+
 						const settings = JSON.parse(data);
+
 						Object.keys(lobbySettings).forEach((field: string) => {
 							if (field in settings) {
 								setLobbySettings({
@@ -509,6 +535,7 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 					// RTC Connection Closed
 					connection.on('close', () => {
 						console.log('Disconnected from', peer, 'Initiator:', initiator);
+
 						disconnectPeer(peer);
 
 						// Auto reconnect on connection error
@@ -522,16 +549,21 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
               )
             ) {
 						  console.log( `Attempting to reconnect to peer (${retries}/10):`, peer, `Initiator:`, initiator );
+						  console.log( `create peer:`, peer, 'Initiator:', initiator );
 							createPeerConnection(peer, initiator);
 							retries++;
 						}
 					});
+
 					return connection;
 				}
 
 				socket.on('join', async (peer: string, client: Client) => {
 					createPeerConnection(peer, true);
-					setSocketClients((old) => ({ ...old, [peer]: client }));
+					setSocketClients((old) => ({
+            ...old,
+            [peer]: client,
+					}));
 				});
 
 				socket.on(
