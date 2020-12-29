@@ -8,13 +8,15 @@ import {
 } from './contexts';
 import { AmongUsState, GameState, Player } from '../common/AmongUsState';
 import Peer from 'simple-peer';
-import { ipcRenderer, remote } from 'electron';
+import { ipcRenderer } from 'electron';
 import VAD from './vad';
 import { ISettings } from '../common/ISettings';
+import { IpcRendererMessages } from '../common/ipc-messages';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import makeStyles from '@material-ui/core/styles/makeStyles';
 import SupportLink from './SupportLink';
+import Divider from '@material-ui/core/Divider';
 
 export interface ExtendedAudioElement extends HTMLAudioElement {
 	setSinkId: (sinkId: string) => Promise<void>;
@@ -73,6 +75,11 @@ interface Client {
 	clientId: number;
 }
 
+interface SocketError {
+	message?: string;
+}
+
+/* Calculate positional audio */
 function calculateVoiceAudio(
 	state: AmongUsState,
 	settings: ISettings,
@@ -94,20 +101,28 @@ function calculateVoiceAudio(
 	if (isNaN(panPos[1])) panPos[1] = 999;
 	panPos[0] = Math.min(999, Math.max(-999, panPos[0]));
 	panPos[1] = Math.min(999, Math.max(-999, panPos[1]));
+
+	/* Other player is in a vent */
 	if (other.inVent) {
 		gain.gain.value = 0;
 		return;
 	}
+
+	/* Ghost players */
 	if (me.isDead && other.isDead) {
 		gain.gain.value = 1;
 		pan.positionX.setValueAtTime(panPos[0], audioContext.currentTime);
 		pan.positionY.setValueAtTime(panPos[1], audioContext.currentTime);
 		return;
 	}
+
+	/* Dead Players */
 	if (!me.isDead && other.isDead) {
 		gain.gain.value = 0;
 		return;
 	}
+
+	/* Lobby or Meeting / In Game / Else */
 	if (
 		state.gameState === GameState.LOBBY ||
 		state.gameState === GameState.DISCUSSION
@@ -122,12 +137,17 @@ function calculateVoiceAudio(
 	} else {
 		gain.gain.value = 0;
 	}
+
+	/* Absolute maximum hearing range */
 	if (
 		gain.gain.value === 1 &&
 		Math.sqrt(Math.pow(panPos[0], 2) + Math.pow(panPos[1], 2)) > 7
 	) {
 		gain.gain.value = 0;
 	}
+
+	console.log( `My Data:`, me );
+	console.log( `Player Data:`, other );
 }
 
 export interface VoiceProps {
@@ -191,7 +211,10 @@ const useStyles = makeStyles((theme) => ({
 	},
 }));
 
-const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
+const Voice: React.FC<VoiceProps> = function ({
+	error: initialError,
+}: VoiceProps) {
+	const [error, setError] = useState(initialError);
 	const [settings, setSettings] = useContext(SettingsContext);
 	const settingsRef = useRef<ISettings>(settings);
 	const [lobbySettings, setLobbySettings] = useContext(LobbySettingsContext);
@@ -217,23 +240,37 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 	const [mutedState, setMuted] = useState(false);
 	const [connected, setConnected] = useState(false);
 
+	/* Disconnect Peer RTC */
 	function disconnectPeer(peer: string) {
 		const connection = peerConnections[peer];
 		if (!connection) {
+		  console.log( `Attempted to delete a peer that does not exist:`, peer );
 			return;
 		}
 		connection.destroy();
+
 		setPeerConnections((connections) => {
 			delete connections[peer];
 			return connections;
 		});
+
 		if (audioElements.current[peer]) {
 			document.body.removeChild(audioElements.current[peer].element);
 			audioElements.current[peer].pan.disconnect();
 			audioElements.current[peer].gain.disconnect();
 			delete audioElements.current[peer];
 		}
+
+		console.log( `disconnect peer:`, audioConnected[peer], 'peer:', peer );
+
+		const audioConnection = audioConnected[peer];
+		if ( !audioConnection ) return;
+		setAudioConnected((connections) => {
+		  delete connections[peer];
+		  return connections;
+    });
 	}
+
 	// Handle pushToTalk, if set
 	useEffect(() => {
 		if (!connectionStuff.current.stream) return;
@@ -247,12 +284,14 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 		Object.values(peerConnections).forEach((peer) => {
 			try {
 				peer.send(JSON.stringify(settings.localLobbySettings));
+				console.log( `peer.send: localLobbySettings`, settings.localLobbySettings );
 			} catch (e) {
 				console.warn('failed to update lobby settings: ', e);
 			}
 		});
 	}, [settings.localLobbySettings]);
 
+	// Max hearing distance changed
 	useEffect(() => {
 		for (const peer in audioElements.current) {
 			audioElements.current[peer].pan.maxDistance = lobbySettings.maxDistance;
@@ -304,6 +343,11 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 		});
 		const { socket } = connectionStuff.current;
 
+		socket.on('error', (error: SocketError) => {
+			if (error.message) {
+				setError(error.message);
+			}
+		});
 		socket.on('connect', () => {
 			setConnected(true);
 		});
@@ -321,16 +365,11 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 			autoGainControl: false,
 			googAutoGainControl: false,
 			googAutoGainControl2: false,
-			channelCount: 2,
-			latency: 0,
-			sampleRate: 48000,
-			sampleSize: 16,
 		};
 
 		// Get microphone settings
-		if (settings.microphone.toLowerCase() !== 'default')
-			audio.deviceId = settings.microphone;
-
+		if (settingsRef.current.microphone.toLowerCase() !== 'default')
+			audio.deviceId = settingsRef.current.microphone;
 		navigator.getUserMedia(
 			{ video: false, audio },
 			async (stream) => {
@@ -338,13 +377,13 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 
 				stream.getAudioTracks()[0].enabled = !settings.pushToTalk;
 
-				ipcRenderer.on('toggleDeafen', () => {
+				ipcRenderer.on(IpcRendererMessages.TOGGLE_DEAFEN, () => {
 					connectionStuff.current.deafened = !connectionStuff.current.deafened;
 					stream.getAudioTracks()[0].enabled =
 						!connectionStuff.current.deafened && !connectionStuff.current.muted;
 					setDeafened(connectionStuff.current.deafened);
 				});
-				ipcRenderer.on('toggleMute', () => {
+				ipcRenderer.on(IpcRendererMessages.TOGGLE_MUTE, () => {
 					connectionStuff.current.muted = !connectionStuff.current.muted;
 					if (connectionStuff.current.deafened) {
 						connectionStuff.current.deafened = false;
@@ -355,12 +394,15 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 					setMuted(connectionStuff.current.muted);
 					setDeafened(connectionStuff.current.deafened);
 				});
-				ipcRenderer.on('pushToTalk', (_: unknown, pressing: boolean) => {
-					if (!connectionStuff.current.pushToTalk) return;
-					if (!connectionStuff.current.deafened) {
-						stream.getAudioTracks()[0].enabled = pressing;
+				ipcRenderer.on(
+					IpcRendererMessages.PUSH_TO_TALK,
+					(_: unknown, pressing: boolean) => {
+						if (!connectionStuff.current.pushToTalk) return;
+						if (!connectionStuff.current.deafened) {
+							stream.getAudioTracks()[0].enabled = pressing;
+						}
 					}
-				});
+				);
 
 				const ac = new AudioContext();
 				ac.createMediaStreamSource(stream);
@@ -378,8 +420,10 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 					playerId: number,
 					clientId: number
 				) => {
-					console.log('Connect called', lobbyCode, playerId, clientId);
+					console.log('Connect called - Lobby:', lobbyCode, 'PlayerId:', playerId, 'ClientId', clientId);
+
 					socket.emit('leave');
+
 					if (lobbyCode === 'MENU') {
 						Object.keys(peerConnections).forEach((k) => {
 							disconnectPeer(k);
@@ -391,26 +435,40 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 						currentLobby = lobbyCode;
 					}
 				};
+
 				setConnect({ connect });
+
 				function createPeerConnection(peer: string, initiator: boolean) {
+				  // STUN Servers
+				  const stunServers: {urls: string|string[]}[] = [
+            { urls: [
+                'stun:stun.l.google.com:19302',
+                'stun:stun1.l.google.com:19302',
+                'stun:stun2.l.google.com:19302',
+                'stun:stun3.l.google.com:19302',
+                'stun:stun4.l.google.com:19302',
+              ],
+            },
+          ];
+
+				  // Create SimplePeer connection
 					const connection = new Peer({
 						stream,
 						initiator,
 						config: {
-							iceServers: [
-								{
-									urls: 'stun:stun.l.google.com:19302',
-								},
-							],
+							iceServers: stunServers,
 						},
 					});
+
 					setPeerConnections((connections) => {
 						connections[peer] = connection;
 						return connections;
 					});
+
 					let retries = 0;
 					let errCode: PeerErrorCode;
 
+					// Connected
 					connection.on('connect', () => {
 						if (gameState.isHost) {
 							try {
@@ -420,6 +478,7 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 							}
 						}
 					});
+
 					connection.on('stream', (stream: MediaStream) => {
 						setAudioConnected((old) => ({ ...old, [peer]: true }));
 						const audio = document.createElement(
@@ -427,8 +486,8 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 						) as ExtendedAudioElement;
 						document.body.appendChild(audio);
 						audio.srcObject = stream;
-						if (settings.speaker.toLowerCase() !== 'default')
-							audio.setSinkId(settings.speaker);
+						if (settingsRef.current.speaker.toLowerCase() !== 'default')
+							audio.setSinkId(settingsRef.current.speaker);
 
 						const context = new AudioContext();
 						const source = context.createMediaStreamSource(stream);
@@ -440,8 +499,10 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 						pan.maxDistance = lobbySettingsRef.current.maxDistance;
 						pan.rolloffFactor = 1;
 
+						// Connect pan and gain to audio source
 						source.connect(pan);
 						pan.connect(gain);
+
 						// Source -> pan -> gain -> VAD -> destination
 						VAD(context, gain, context.destination, {
 							onVoiceStart: () => setTalking(true),
@@ -450,24 +511,32 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 						});
 
 						const setTalking = (talking: boolean) => {
+						  // const playerId = socketClientsRef.current[peer].playerId || socketClientsRef.current[peer].id;
 							setOtherTalking((old) => ({
 								...old,
 								[socketClientsRef.current[peer].playerId]:
 									talking && gain.gain.value > 0,
 							}));
+
+							console.log( `Peer:`, socketClientsRef.current[peer], `Talking:`, talking );
 						};
+
 						audioElements.current[peer] = { element: audio, gain, pan };
 					});
+
 					connection.on('signal', (data) => {
 						socket.emit('signal', {
 							data,
 							to: peer,
 						});
 					});
+
 					connection.on('data', (data) => {
 						if (gameState.hostId !== socketClientsRef.current[peer].clientId)
 							return;
+
 						const settings = JSON.parse(data);
+
 						Object.keys(lobbySettings).forEach((field: string) => {
 							if (field in settings) {
 								setLobbySettings({
@@ -477,8 +546,11 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 							}
 						});
 					});
+
+					// RTC Connection Closed
 					connection.on('close', () => {
 						console.log('Disconnected from', peer, 'Initiator:', initiator);
+
 						disconnectPeer(peer);
 
 						// Auto reconnect on connection error
@@ -489,16 +561,24 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 							(errCode == 'ERR_CONNECTION_FAILURE' ||
 								errCode == 'ERR_DATA_CHANNEL')
 						) {
+							console.log( `Attempting to reconnect to peer (${retries}/10):`, peer, `Initiator:`, initiator );
+						  console.log( `create peer:`, peer, 'Initiator:', initiator );
 							createPeerConnection(peer, initiator);
 							retries++;
 						}
 					});
+
 					return connection;
 				}
+
 				socket.on('join', async (peer: string, client: Client) => {
 					createPeerConnection(peer, true);
-					setSocketClients((old) => ({ ...old, [peer]: client }));
+					setSocketClients((old) => ({
+            ...old,
+            [peer]: client,
+					}));
 				});
+
 				socket.on(
 					'signal',
 					({ data, from }: { data: Peer.SignalData; from: string }) => {
@@ -511,19 +591,25 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 						connection.signal(data);
 					}
 				);
+
 				socket.on('setClient', (socketId: string, client: Client) => {
-					setSocketClients((old) => ({ ...old, [socketId]: client }));
+					setSocketClients((old) => ({
+            ...old,
+            [socketId]: client,
+					}));
 				});
+
 				socket.on('setClients', (clients: SocketClientMap) => {
 					setSocketClients(clients);
 				});
 			},
 			(error) => {
 				console.error(error);
-				remote.dialog.showErrorBox(
-					'Error',
-					"Couldn't connect to your microphone:\n" + error
-				);
+				setError("Couldn't connect to your microphone:\n" + error);
+				// ipcRenderer.send(IpcMessages.SHOW_ERROR_DIALOG, {
+				// 	title: 'Error',
+				// 	content: 'Couldn\'t connect to your microphone:\n' + error
+				// });
 			}
 		);
 
@@ -646,6 +732,7 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 		if (socketClients[k].playerId)
 			playerSocketIds[socketClients[k].playerId] = k;
 	}
+
 	return (
 		<div className={classes.root}>
 			{error && (
@@ -691,7 +778,7 @@ const Voice: React.FC<VoiceProps> = function ({ error }: VoiceProps) {
 					)}
 				</div>
 			</div>
-			{gameState.lobbyCode && <hr />}
+			{gameState.lobbyCode && <Divider />}
 			<Grid
 				container
 				spacing={1}

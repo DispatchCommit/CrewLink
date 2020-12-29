@@ -25,14 +25,14 @@ const Footer: React.FC = function () {
 	const classes = useStyles();
 	return (
 		<div className={classes.footer}>
-			<Typography>Made by Ottomated</Typography>
+			<Typography>Maintained by DispatchPlays</Typography>
 			<div className={classes.row}>
 				<svg
 					width={36}
 					height={36}
 					viewBox="0 0 24 24"
 					onClick={() => {
-						shell.openExternal('https://github.com/ottomated/crewlink');
+						shell.openExternal('https://github.com/DispatchCommit/DispatchLink');
 					}}
 				>
 					<path
@@ -45,7 +45,7 @@ const Footer: React.FC = function () {
 					height={36}
 					viewBox="0 0 24 24"
 					onClick={() => {
-						shell.openExternal('https://twitch.tv/ottomated');
+						shell.openExternal('https://twitch.tv/DispatchPlays');
 					}}
 				>
 					<path
@@ -58,7 +58,7 @@ const Footer: React.FC = function () {
 					height={36}
 					viewBox="0 0 24 24"
 					onClick={() => {
-						shell.openExternal('https://twitter.com/Ottomated_');
+						shell.openExternal('https://twitter.com/DispatchPlays');
 					}}
 				>
 					<path
@@ -71,7 +71,7 @@ const Footer: React.FC = function () {
 					height={36}
 					viewBox="0 0 24 24"
 					onClick={() => {
-						shell.openExternal('https://paypal.me/ottomated');
+						shell.openExternal('https://paypal.me/xanderluciano');
 					}}
 				>
 					<path

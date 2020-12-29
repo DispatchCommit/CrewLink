@@ -1,20 +1,20 @@
 {
-  "name": "crewlink",
-  "version": "1.1.6",
+  "name": "dispatchlink",
+  "version": "1.2.4",
   "license": "GPL-3.0-or-later",
   "description": "Free, open, Among Us proximity voice chat",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ottomated/crewlink.git"
+    "url": "https://github.com/dispatchcommit/DispatchLink.git"
   },
   "funding": {
     "type": "individual",
-    "url": "https://paypal.me/ottomated"
+    "url": "https://paypal.me/xanderluciano"
   },
   "author": {
-    "name": "Ottomated",
-    "email": "otto@ottomated.net",
-    "url": "https://ottomated.net"
+    "name": "DispatchCommit",
+    "email": "dispatchcommit@gmail.com",
+    "url": "https://twitter.com/dispatchcommit"
   },
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
@@ -50,6 +50,7 @@
     "electron-window-state": "^5.0.3",
     "iohook": "^0.7.1",
     "memoryjs": "git://github.com/Rob--/memoryjs",
+    "pretty-bytes": "^5.5.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "registry-js": "^1.12.0",
@@ -68,6 +69,7 @@
     "@types/deep-equal": "^1.0.1",
     "@types/js-yaml": "^3.12.5",
     "@types/node": "12",
+    "@types/pretty-bytes": "^5.2.0",
     "@types/react": "^16.9.53",
     "@types/react-dom": "^16.9.8",
     "@types/simple-peer": "^9.6.1",

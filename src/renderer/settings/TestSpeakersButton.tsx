@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 // @ts-ignore
 import chime from '../../../static/chime.mp3';
 import { ExtendedAudioElement } from '../Voice';
@@ -20,18 +20,21 @@ const TestSpeakersButton: React.FC<TestSpeakersProps> = ({
 	speaker,
 }: TestSpeakersProps) => {
 	const classes = useStyles();
-	const [playing, setPlaying] = useState(false);
+
+	const audio = new Audio() as ExtendedAudioElement;
+  audio.src = chime;
+  audio.volume = 0.5;
+
 	const testSpeakers = () => {
-		const audio = new Audio() as ExtendedAudioElement;
-		audio.src = chime;
+		if (speaker.toLowerCase() !== 'default')
+		  audio.setSinkId(speaker);
 
-		if (speaker.toLowerCase() !== 'default') audio.setSinkId(speaker);
-
-		audio.play();
-		setPlaying(true);
-		audio.addEventListener('pause', () => {
-			setPlaying(false);
-		});
+		if ( audio.paused ) {
+		  audio.currentTime = 0;
+      audio.play();
+    } else {
+		  audio.pause();
+    }
 	};
 
 	return (
@@ -41,9 +44,8 @@ const TestSpeakersButton: React.FC<TestSpeakersProps> = ({
 			size="small"
 			className={classes.button}
 			onClick={testSpeakers}
-			disabled={playing}
 		>
-			Test Speaker
+      Test Speaker
 		</Button>
 	);
 };

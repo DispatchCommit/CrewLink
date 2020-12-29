@@ -1,12 +1,13 @@
-import { app, dialog, ipcMain } from 'electron';
-import path from 'path';
-// import * as Struct from 'structron';
-import { HKEY, enumerateValues } from 'registry-js';
-import spawn from 'cross-spawn';
+import { ipcMain } from 'electron';
 import GameReader from './GameReader';
 import iohook from 'iohook';
 import Store from 'electron-store';
 import { ISettings } from '../common/ISettings';
+import {
+	IpcHandlerMessages,
+	IpcRendererMessages,
+	IpcSyncMessages,
+} from '../common/ipc-messages';
 
 interface IOHookEvent {
 	type: string;
@@ -24,7 +25,18 @@ const store = new Store<ISettings>();
 let readingGame = false;
 let gameReader: GameReader;
 
-ipcMain.on('start', async (event) => {
+ipcMain.on(IpcSyncMessages.GET_INITIAL_STATE, (event) => {
+	if (!readingGame) {
+		console.error(
+			'Recieved GET_INITIAL_STATE message before the START_HOOK message was received'
+		);
+		event.returnValue = null;
+		return;
+	}
+	event.returnValue = gameReader.lastState;
+});
+
+ipcMain.handle(IpcHandlerMessages.START_HOOK, async (event) => {
 	if (!readingGame) {
 		readingGame = true;
 
@@ -32,22 +44,22 @@ ipcMain.on('start', async (event) => {
 		iohook.on('keydown', (ev: IOHookEvent) => {
 			const shortcutKey = store.get('pushToTalkShortcut');
 			if (!isMouseButton(shortcutKey) && keyCodeMatches(shortcutKey as K, ev)) {
-				event.reply('pushToTalk', true);
+				event.sender.send(IpcRendererMessages.PUSH_TO_TALK, true);
 			}
 		});
 		iohook.on('keyup', (ev: IOHookEvent) => {
 			const shortcutKey = store.get('pushToTalkShortcut');
 			if (!isMouseButton(shortcutKey) && keyCodeMatches(shortcutKey as K, ev)) {
-				event.reply('pushToTalk', false);
+				event.sender.send(IpcRendererMessages.PUSH_TO_TALK, false);
 			}
 			if (
 				!isMouseButton(store.get('deafenShortcut')) &&
 				keyCodeMatches(store.get('deafenShortcut') as K, ev)
 			) {
-				event.reply('toggleDeafen');
+				event.sender.send(IpcRendererMessages.TOGGLE_DEAFEN);
 			}
 			if (keyCodeMatches(store.get('muteShortcut', 'RAlt') as K, ev)) {
-				event.reply('toggleMute');
+				event.sender.send(IpcRendererMessages.TOGGLE_MUTE);
 			}
 		});
 
@@ -58,7 +70,7 @@ ipcMain.on('start', async (event) => {
 				isMouseButton(shortcutMouse) &&
 				mouseClickMatches(shortcutMouse as M, ev)
 			) {
-				event.reply('pushToTalk', true);
+				event.sender.send(IpcRendererMessages.PUSH_TO_TALK, true);
 			}
 		});
 		iohook.on('mouseup', (ev: IOHookEvent) => {
@@ -67,25 +79,20 @@ ipcMain.on('start', async (event) => {
 				isMouseButton(shortcutMouse) &&
 				mouseClickMatches(shortcutMouse as M, ev)
 			) {
-				event.reply('pushToTalk', false);
+				event.sender.send(IpcRendererMessages.PUSH_TO_TALK, false);
 			}
 		});
 
 		iohook.start();
 
 		// Read game memory
-		gameReader = new GameReader(
-			event.reply as (event: string, ...args: unknown[]) => void
-		);
+		gameReader = new GameReader(event.sender.send.bind(event.sender));
 
-		ipcMain.on('initState', (event: Electron.IpcMainEvent) => {
-			event.returnValue = gameReader.lastState;
-		});
 		const frame = () => {
 			const err = gameReader.loop();
 			if (err) {
 				readingGame = false;
-				event.reply('error', err);
+				event.sender.send(IpcRendererMessages.ERROR, err);
 			} else {
 				setTimeout(frame, 1000 / 20);
 			}
@@ -94,7 +101,6 @@ ipcMain.on('start', async (event) => {
 	} else if (gameReader) {
 		gameReader.amongUs = null;
 	}
-	event.reply('started');
 });
 
 const keycodeMap = {
@@ -134,7 +140,7 @@ type K = keyof typeof keycodeMap;
 
 function keyCodeMatches(key: K, ev: IOHookEvent): boolean {
 	if (keycodeMap[key]) return keycodeMap[key] === ev.keycode;
-	else if (key.length === 1) return key.charCodeAt(0) === ev.rawcode;
+	else if (key && key.length === 1) return key.charCodeAt(0) === ev.rawcode;
 	else {
 		console.error('Invalid key', key);
 		return false;
@@ -158,32 +164,3 @@ function mouseClickMatches(key: M, ev: IOHookEvent): boolean {
 function isMouseButton(shortcutKey: string): boolean {
 	return shortcutKey.includes('MouseButton');
 }
-
-ipcMain.on('openGame', () => {
-	// Get steam path from registry
-	const steamPath = enumerateValues(
-		HKEY.HKEY_LOCAL_MACHINE,
-		'SOFTWARE\\WOW6432Node\\Valve\\Steam'
-	).find((v) => v.name === 'InstallPath');
-	// Check if Steam is installed
-	if (!steamPath) {
-		dialog.showErrorBox('Error', 'Could not find your Steam install path.');
-	} else {
-		try {
-			const process = spawn(path.join(steamPath.data as string, 'steam.exe'), [
-				'-applaunch',
-				'945360',
-			]);
-			process.on('error', () => {
-				dialog.showErrorBox('Error', 'Please launch the game manually.');
-			});
-		} catch (e) {
-			dialog.showErrorBox('Error', 'Please launch the game manually.');
-		}
-	}
-});
-
-ipcMain.on('relaunch', () => {
-	app.relaunch();
-	app.quit();
-});

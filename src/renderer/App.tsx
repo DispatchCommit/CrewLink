@@ -8,7 +8,7 @@ import React, {
 import ReactDOM from 'react-dom';
 import Voice from './Voice';
 import Menu from './Menu';
-import { ipcRenderer, remote } from 'electron';
+import { ipcRenderer } from 'electron';
 import { AmongUsState } from '../common/AmongUsState';
 import Settings, {
 	settingsReducer,
@@ -20,11 +20,26 @@ import {
 	LobbySettingsContext,
 } from './contexts';
 import { ThemeProvider } from '@material-ui/core/styles';
+import {
+	AutoUpdaterState,
+	IpcHandlerMessages,
+	IpcMessages,
+	IpcRendererMessages,
+	IpcSyncMessages,
+} from '../common/ipc-messages';
 import theme from './theme';
 import SettingsIcon from '@material-ui/icons/Settings';
 import CloseIcon from '@material-ui/icons/Close';
 import IconButton from '@material-ui/core/IconButton';
+import Dialog from '@material-ui/core/Dialog';
 import makeStyles from '@material-ui/core/styles/makeStyles';
+import LinearProgress from '@material-ui/core/LinearProgress';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogActions from '@material-ui/core/DialogActions';
+import Button from '@material-ui/core/Button';
+import prettyBytes from 'pretty-bytes';
 
 let appVersion = '';
 if (typeof window !== 'undefined' && window.location) {
@@ -70,7 +85,7 @@ const TitleBar: React.FC<TitleBarProps> = function ({
 	const classes = useStyles();
 	return (
 		<div className={classes.root}>
-			<span className={classes.title}>CrewLink{appVersion}</span>
+			<span className={classes.title}>DispatchLink{appVersion}</span>
 			<IconButton
 				className={classes.button}
 				style={{ left: 0 }}
@@ -83,7 +98,7 @@ const TitleBar: React.FC<TitleBarProps> = function ({
 				className={classes.button}
 				style={{ right: 0 }}
 				size="small"
-				onClick={() => remote.getCurrentWindow().close()}
+				onClick={() => ipcRenderer.send(IpcMessages.QUIT_CREWLINK)}
 			>
 				<CloseIcon htmlColor="#777" />
 			</IconButton>
@@ -101,19 +116,22 @@ function App() {
 	const [gameState, setGameState] = useState<AmongUsState>({} as AmongUsState);
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [error, setError] = useState('');
+	const [updaterState, setUpdaterState] = useState<AutoUpdaterState>({
+		state: 'unavailable',
+	});
 	const settings = useReducer(settingsReducer, {
 		alwaysOnTop: false,
 		microphone: 'Default',
 		speaker: 'Default',
 		pushToTalk: false,
-		serverURL: 'https://crewl.ink',
+		serverURL: 'http://138.68.12.47:9736',
 		pushToTalkShortcut: 'V',
 		deafenShortcut: 'RControl',
 		muteShortcut: 'RAlt',
 		hideCode: false,
 		enableSpatialAudio: true,
 		localLobbySettings: {
-			maxDistance: 5.32,
+      maxDistance: 3,
 		},
 	});
 	const lobbySettings = useReducer(
@@ -128,21 +146,47 @@ function App() {
 		const onState = (_: Electron.IpcRendererEvent, newState: AmongUsState) => {
 			setGameState(newState);
 		};
-		let shouldInit = true;
 		const onError = (_: Electron.IpcRendererEvent, error: string) => {
 			shouldInit = false;
 			setError(error);
 		};
-		ipcRenderer.on('gameOpen', onOpen);
-		ipcRenderer.on('error', onError);
-		ipcRenderer.on('gameState', onState);
-		ipcRenderer.once('started', () => {
-			if (shouldInit) setGameState(ipcRenderer.sendSync('initState'));
-		});
+		const onAutoUpdaterStateChange = (
+			_: Electron.IpcRendererEvent,
+			state: AutoUpdaterState
+		) => {
+			setUpdaterState((old) => ({ ...old, ...state }));
+		};
+		let shouldInit = true;
+		ipcRenderer
+			.invoke(IpcHandlerMessages.START_HOOK)
+			.then(() => {
+				if (shouldInit) {
+					setGameState(ipcRenderer.sendSync(IpcSyncMessages.GET_INITIAL_STATE));
+				}
+			})
+			.catch((error: Error) => {
+				if (shouldInit) {
+					shouldInit = false;
+					setError(error.message);
+				}
+			});
+		ipcRenderer.on(
+			IpcRendererMessages.AUTO_UPDATER_STATE,
+			onAutoUpdaterStateChange
+		);
+		ipcRenderer.on(IpcRendererMessages.NOTIFY_GAME_OPENED, onOpen);
+		ipcRenderer.on(IpcRendererMessages.NOTIFY_GAME_STATE_CHANGED, onState);
+		ipcRenderer.on(IpcRendererMessages.ERROR, onError);
+
 		return () => {
-			ipcRenderer.off('gameOpen', onOpen);
-			ipcRenderer.off('error', onError);
-			ipcRenderer.off('gameState', onState);
+			ipcRenderer.off(
+				IpcRendererMessages.AUTO_UPDATER_STATE,
+				onAutoUpdaterStateChange
+			);
+			ipcRenderer.off(IpcRendererMessages.NOTIFY_GAME_OPENED, onOpen);
+			ipcRenderer.off(IpcRendererMessages.NOTIFY_GAME_STATE_CHANGED, onState);
+			ipcRenderer.off(IpcRendererMessages.ERROR, onError);
+			shouldInit = false;
 		};
 	}, []);
 
@@ -155,20 +199,65 @@ function App() {
 			page = <Voice error={error} />;
 			break;
 	}
+
 	return (
 		<GameStateContext.Provider value={gameState}>
 			<LobbySettingsContext.Provider value={lobbySettings}>
 				<SettingsContext.Provider value={settings}>
 					<ThemeProvider theme={theme}>
+
+            {/* Title bar */}
 						<TitleBar
 							settingsOpen={settingsOpen}
 							setSettingsOpen={setSettingsOpen}
 						/>
+
+						{/* Settings Panel */}
 						<Settings
 							open={settingsOpen}
 							onClose={() => setSettingsOpen(false)}
 						/>
+
+						{/* Update Dialog */}
+						<Dialog fullWidth open={updaterState.state !== 'unavailable'}>
+							<DialogTitle>Updating...</DialogTitle>
+							<DialogContent>
+								{(updaterState.state === 'downloading' ||
+									updaterState.state === 'downloaded') &&
+									updaterState.progress && (
+										<>
+											<LinearProgress
+												variant={
+													updaterState.state === 'downloaded'
+														? 'indeterminate'
+														: 'determinate'
+												}
+												value={updaterState.progress.percent}
+											/>
+											<DialogContentText>
+												{prettyBytes(updaterState.progress.transferred)} /{' '}
+												{prettyBytes(updaterState.progress.total)}
+											</DialogContentText>
+										</>
+									)}
+								{updaterState.state === 'error' && (
+									<DialogContentText color="error">
+										{updaterState.error}
+									</DialogContentText>
+								)}
+							</DialogContent>
+							{updaterState.state === 'error' && (
+								<DialogActions>
+									<Button href="https://github.com/DispatchCommit/DispatchLink/releases/latest">
+										Download Manually
+									</Button>
+								</DialogActions>
+							)}
+						</Dialog>
+
+            {/* Application */}
 						{page}
+
 					</ThemeProvider>
 				</SettingsContext.Provider>
 			</LobbySettingsContext.Provider>

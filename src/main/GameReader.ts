@@ -9,6 +9,7 @@ import {
 	readMemory as readMemoryRaw,
 } from 'memoryjs';
 import Struct from 'structron';
+import { IpcRendererMessages } from '../common/ipc-messages';
 import { GameState, AmongUsState, Player } from '../common/AmongUsState';
 import equal from 'deep-equal';
 import { createHash } from 'crypto';
@@ -36,7 +37,7 @@ interface PlayerReport {
 }
 
 export default class GameReader {
-	reply: (event: string, ...args: unknown[]) => void;
+	sendIPC: Electron.WebContents['send'];
 	offsets: IOffsets | undefined;
 	PlayerStruct: Struct | undefined;
 
@@ -69,7 +70,7 @@ export default class GameReader {
 				const dllHash = createHash('sha256');
 				dllHash.update(readFileSync(this.gameAssembly.szExePath));
 				this.dllHash = dllHash.digest('base64');
-				this.reply('gameOpen', true);
+				this.sendIPC(IpcRendererMessages.NOTIFY_GAME_OPENED, true);
 			} catch (e) {
 				if (processOpen && e.toString() === 'Error: unable to find process')
 					throw Errors.OPEN_AS_ADMINISTRATOR;
@@ -78,7 +79,7 @@ export default class GameReader {
 		} else if (this.amongUs && !processOpen) {
 			this.amongUs = null;
 			this.dllHash = null;
-			this.reply('gameOpen', false);
+			this.sendIPC(IpcRendererMessages.NOTIFY_GAME_OPENED, false);
 		}
 		return;
 	}
@@ -291,7 +292,7 @@ export default class GameReader {
 			const stateHasChanged = !equal(this.lastState, newState);
 			if (stateHasChanged) {
 				try {
-					this.reply('gameState', newState);
+					this.sendIPC(IpcRendererMessages.NOTIFY_GAME_STATE_CHANGED, newState);
 				} catch (e) {
 					process.exit(0);
 				}
@@ -303,8 +304,8 @@ export default class GameReader {
 		return null;
 	}
 
-	constructor(reply: (event: string, ...args: unknown[]) => void) {
-		this.reply = reply;
+	constructor(sendIPC: Electron.WebContents['send']) {
+		this.sendIPC = sendIPC;
 	}
 
 	readMemory<T>(

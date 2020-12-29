@@ -6,6 +6,9 @@ import windowStateKeeper from 'electron-window-state';
 import { join as joinPath } from 'path';
 import { format as formatUrl } from 'url';
 import './hook';
+import { initializeIpcHandlers, initializeIpcListeners } from './ipc-handlers';
+import { IpcRendererMessages } from '../common/ipc-messages';
+import { ProgressInfo } from 'builder-util-runtime';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -19,10 +22,10 @@ function createMainWindow() {
 
 	const window = new BrowserWindow({
 		width: 250,
-		height: 350,
+		height: 400,
 		maxWidth: 250,
 		minWidth: 250,
-		maxHeight: 350,
+		maxHeight: 450,
 		minHeight: 350,
 		x: mainWindowState.x,
 		y: mainWindowState.y,
@@ -34,22 +37,26 @@ function createMainWindow() {
 		transparent: true,
 		webPreferences: {
 			nodeIntegration: true,
-			enableRemoteModule: true,
 			webSecurity: false,
 		},
 	});
 
 	mainWindowState.manage(window);
-
 	if (isDevelopment) {
-		window.webContents.openDevTools();
+		// Force devtools into detached mode otherwise they are unusable
+		window.webContents.openDevTools({
+			mode: 'detach',
+		});
 	}
 
+	let crewlinkVersion: string;
 	if (isDevelopment) {
+		crewlinkVersion = '0.0.0';
 		window.loadURL(
-			`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}?version=${autoUpdater.currentVersion.version}`
+			`http://localhost:${process.env.ELECTRON_WEBPACK_WDS_PORT}?version=DEV`
 		);
 	} else {
+		crewlinkVersion = autoUpdater.currentVersion.version;
 		window.loadURL(
 			formatUrl({
 				pathname: joinPath(__dirname, 'index.html'),
@@ -61,6 +68,7 @@ function createMainWindow() {
 			})
 		);
 	}
+	window.webContents.userAgent = `CrewLink/${crewlinkVersion} (${process.platform})`;
 
 	window.on('closed', () => {
 		mainWindow = null;
@@ -80,7 +88,60 @@ const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
 	app.quit();
 } else {
-	autoUpdater.checkForUpdatesAndNotify();
+	autoUpdater.checkForUpdates();
+	autoUpdater.on('update-available', () => {
+		mainWindow?.webContents.send(IpcRendererMessages.AUTO_UPDATER_STATE, {
+			state: 'available',
+		});
+	});
+	autoUpdater.on('error', (err: string) => {
+		mainWindow?.webContents.send(IpcRendererMessages.AUTO_UPDATER_STATE, {
+			state: 'error',
+			error: err,
+		});
+	});
+	autoUpdater.on('download-progress', (progress: ProgressInfo) => {
+		mainWindow?.webContents.send(IpcRendererMessages.AUTO_UPDATER_STATE, {
+			state: 'downloading',
+			progress,
+		});
+	});
+	autoUpdater.on('update-downloaded', () => {
+		mainWindow?.webContents.send(IpcRendererMessages.AUTO_UPDATER_STATE, {
+			state: 'downloaded',
+		});
+		app.relaunch();
+		autoUpdater.quitAndInstall();
+	});
+
+	// Mock auto-update download
+	// setTimeout(() => {
+	// 	mainWindow?.webContents.send(IpcRendererMessages.AUTO_UPDATER_STATE, {
+	// 		state: 'available'
+	// 	});
+	// 	let total = 1000*1000;
+	// 	let i = 0;
+	// 	let interval = setInterval(() => {
+	// 		mainWindow?.webContents.send(IpcRendererMessages.AUTO_UPDATER_STATE, {
+	// 			state: 'downloading',
+	// 			progress: {
+	// 				total,
+	// 				delta: total * 0.01,
+	// 				transferred: i * total / 100,
+	// 				percent: i,
+	// 				bytesPerSecond: 1000
+	// 			}
+	// 		} as AutoUpdaterState);
+	// 		i++;
+	// 		if (i === 100) {
+	// 			clearInterval(interval);
+	// 			mainWindow?.webContents.send(IpcRendererMessages.AUTO_UPDATER_STATE, {
+	// 				state: 'downloaded',
+	// 			});
+	// 		}
+	// 	}, 100);
+	// }, 10000);
+
 	app.on('second-instance', () => {
 		// Someone tried to run a second instance, we should focus our window.
 		if (mainWindow) {
@@ -105,7 +166,9 @@ if (!gotTheLock) {
 	});
 
 	// create main BrowserWindow when electron is ready
-	app.on('ready', () => {
+	app.whenReady().then(() => {
+		initializeIpcListeners();
+		initializeIpcHandlers();
 		mainWindow = createMainWindow();
 	});
 }
