@@ -426,10 +426,6 @@ const Voice: React.FC<VoiceProps> = function ({
 				) => {
 					console.log('Connect called - Lobby:', lobbyCode, 'PlayerId:', playerId, 'ClientId', clientId);
 
-					// We shouldn't always leave...
-          // only leave if our lobby code has changed
-					// socket.emit('leave');
-
 					if (lobbyCode === 'MENU') {
 					  // leave the prox lobby
             socket.emit('leave');
