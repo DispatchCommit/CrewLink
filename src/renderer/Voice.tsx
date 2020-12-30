@@ -426,15 +426,23 @@ const Voice: React.FC<VoiceProps> = function ({
 				) => {
 					console.log('Connect called - Lobby:', lobbyCode, 'PlayerId:', playerId, 'ClientId', clientId);
 
-					socket.emit('leave');
+					// We shouldn't always leave...
+          // only leave if our lobby code has changed
+					// socket.emit('leave');
 
 					if (lobbyCode === 'MENU') {
+					  // leave the prox lobby
+            socket.emit('leave');
+
 						Object.keys(peerConnections).forEach((k) => {
 							disconnectPeer(k);
 						});
 						setSocketClients({});
 						currentLobby = lobbyCode;
 					} else if (currentLobby !== lobbyCode) {
+					  // ensure clean reconnection
+            socket.emit('leave');
+
 						socket.emit('join', lobbyCode, playerId, clientId);
 						currentLobby = lobbyCode;
 					}
@@ -728,8 +736,8 @@ const Voice: React.FC<VoiceProps> = function ({
 				myPlayer.id,
 				gameState.clientId
 			);
-      console.log( `PlayerId Changed: ${myPlayer?.id}` );
 		}
+    console.log( `PlayerId Changed: ${myPlayer?.id}`, myPlayer );
 	}, [myPlayer?.id]);
 
 	const playerSocketIds: {
