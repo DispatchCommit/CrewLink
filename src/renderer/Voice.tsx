@@ -115,8 +115,8 @@ function calculateVoiceAudio(
 	/* Ghost players */
 	if (me.isDead && other.isDead) {
 		gain.gain.value = 1;
-		pan.positionX.setValueAtTime(panPos[0], audioContext.currentTime);
-		pan.positionY.setValueAtTime(panPos[1], audioContext.currentTime);
+		pan.positionX.setValueAtTime(panPos[0] / 4, audioContext.currentTime);
+		pan.positionY.setValueAtTime(panPos[1] / 4, audioContext.currentTime);
 		return;
 	}
 
