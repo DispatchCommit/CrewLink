@@ -581,6 +581,7 @@ const Voice: React.FC<VoiceProps> = function ({
             ...old,
             [peer]: client,
 					}));
+					console.log( `join:`, peer, `client:`, client);
 				});
 
 				socket.on(
@@ -601,10 +602,12 @@ const Voice: React.FC<VoiceProps> = function ({
             ...old,
             [socketId]: client,
 					}));
+					console.log( `setClient:`, socketId, `client:`, client );
 				});
 
 				socket.on('setClients', (clients: SocketClientMap) => {
 					setSocketClients(clients);
+					console.log( `setClients:`, clients );
 				});
 			},
 			(error) => {
@@ -725,6 +728,7 @@ const Voice: React.FC<VoiceProps> = function ({
 				myPlayer.id,
 				gameState.clientId
 			);
+      console.log( `PlayerId Changed: ${myPlayer?.id}` );
 		}
 	}, [myPlayer?.id]);
 
